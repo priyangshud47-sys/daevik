@@ -88,14 +88,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return session;
     },
     async authorized({ auth: session, request }) {
-      const isAdminRoute = request.nextUrl.pathname.startsWith('/admin');
-      const isLoginPage = request.nextUrl.pathname === '/admin/login';
-      const isApiAdminRoute = request.nextUrl.pathname.startsWith('/api/admin');
+      const hostname = request.headers.get('host') || '';
+      const adminDomain = process.env.NEXT_PUBLIC_ADMIN_DOMAIN || 'admin.daevik.in';
+      const isAdminDomain = hostname === adminDomain || hostname.endsWith(`.${adminDomain}`);
+
+      const pathname = request.nextUrl.pathname;
+      const isAdminRoute = pathname.startsWith('/admin') || (isAdminDomain && pathname === '/');
+      const isLoginPage = pathname === '/admin/login' || (isAdminDomain && pathname === '/login');
+      const isApiAdminRoute = pathname.startsWith('/api/admin');
 
       // Allow login page access
       if (isLoginPage) {
         if (session?.user) {
-          return Response.redirect(new URL('/admin', request.nextUrl));
+          return Response.redirect(new URL(isAdminDomain ? '/' : '/admin', request.nextUrl));
         }
         return true;
       }
