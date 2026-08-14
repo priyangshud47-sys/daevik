@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 
 const CheckCircle = () => (
@@ -37,7 +37,7 @@ interface Product {
   gateway_provider: string;
 }
 
-export default function ZeroInvestmentGuideCheckout() {
+function CheckoutContent() {
   const slug = 'zero-investment-guide';
 
   // Hardcoded product info — this is a dedicated checkout page, no need to fetch from admin API
@@ -1140,5 +1140,13 @@ function CheckoutStyles() {
         }
       }
     `}} />
+  );
+}
+
+export default function ZeroInvestmentGuideCheckout() {
+  return (
+    <Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', padding: '40px' }}><div className="zig-spinner"></div></div>}>
+      <CheckoutContent />
+    </Suspense>
   );
 }
