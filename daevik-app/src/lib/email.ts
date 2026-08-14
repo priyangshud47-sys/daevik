@@ -1,0 +1,220 @@
+// Email Automation Service (Resend)
+import { Resend } from 'resend';
+import { supabase } from '@/lib/supabase';
+
+let resendInstance: Resend | null = null;
+function getResend(): Resend {
+  if (!resendInstance) {
+    resendInstance = new Resend(process.env.RESEND_API_KEY || 're_placeholder');
+  }
+  return resendInstance;
+}
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'noreply@daevik.in';
+
+interface SendEmailParams {
+  to: string;
+  subject: string;
+  html: string;
+  senderName?: string;
+  orderId?: string;
+  attachments?: { filename: string; content: Buffer }[];
+}
+
+interface TemplateData {
+  customer_name: string;
+  customer_email: string;
+  product_name: string;
+  product_price: string;
+  download_link: string;
+  order_id: string;
+  [key: string]: string;
+}
+
+// Replace template placeholders with actual values
+export function renderTemplate(template: string, data: TemplateData): string {
+  let rendered = template;
+  for (const [key, value] of Object.entries(data)) {
+    rendered = rendered.replace(new RegExp(`{{${key}}}`, 'g'), value);
+  }
+  return rendered;
+}
+
+// Send email with retry logic
+export async function sendEmail(params: SendEmailParams, maxRetries = 3): Promise<boolean> {
+  let attempts = 0;
+  let lastError: string | null = null;
+
+  // Create email log entry
+  const { data: logEntry } = await supabase
+    .from('email_logs')
+    .insert({
+      order_id: params.orderId || null,
+      customer_email: params.to,
+      subject: params.subject,
+      status: 'pending',
+      attempts: 0,
+    })
+    .select()
+    .single();
+
+  while (attempts < maxRetries) {
+    attempts++;
+    try {
+      const { error } = await getResend().emails.send({
+        from: `${params.senderName || 'Daevik'} <${FROM_EMAIL}>`,
+        to: params.to,
+        subject: params.subject,
+        html: params.html,
+        attachments: params.attachments,
+      });
+
+      if (error) {
+        lastError = error.message;
+        // Wait before retry (exponential backoff)
+        await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempts) * 1000));
+        continue;
+      }
+
+      // Success — update log
+      if (logEntry) {
+        await supabase
+          .from('email_logs')
+          .update({
+            status: 'sent',
+            attempts,
+            sent_at: new Date().toISOString(),
+          })
+          .eq('id', logEntry.id);
+      }
+
+      return true;
+    } catch (err) {
+      lastError = err instanceof Error ? err.message : 'Unknown error';
+      // Wait before retry
+      await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempts) * 1000));
+    }
+  }
+
+  // All retries failed — update log
+  if (logEntry) {
+    await supabase
+      .from('email_logs')
+      .update({
+        status: 'failed',
+        attempts,
+        error_message: lastError,
+      })
+      .eq('id', logEntry.id);
+  }
+
+  console.error(`Email send failed after ${maxRetries} attempts:`, lastError);
+  return false;
+}
+
+// Send product delivery email using the default template
+export async function sendProductDeliveryEmail(params: {
+  customerName: string;
+  customerEmail: string;
+  productName: string;
+  productPrice: string;
+  downloadLink: string;
+  orderId: string;
+  productId?: string;
+  fileUrl?: string | null;
+  fileName?: string | null;
+}): Promise<boolean> {
+  // Fetch the default email template
+  const { data: template } = await supabase
+    .from('email_templates')
+    .select('*')
+    .eq('is_default', true)
+    .single();
+
+  if (!template) {
+    console.error('No default email template found');
+    return false;
+  }
+
+  const templateData: TemplateData = {
+    customer_name: params.customerName,
+    customer_email: params.customerEmail,
+    product_name: params.productName,
+    product_price: params.productPrice,
+    download_link: params.downloadLink,
+    order_id: params.orderId,
+  };
+
+  const subject = renderTemplate(template.subject, templateData);
+  const html = renderTemplate(template.body, templateData);
+
+  const attachments: { filename: string; content: Buffer }[] = [];
+  let finalFileUrl = params.fileUrl;
+  let finalFileName = params.fileName;
+
+  if (params.productId && !finalFileUrl) {
+    const { data: product } = await supabase
+      .from('products')
+      .select('name, product_file_url, checkout_config')
+      .eq('id', params.productId)
+      .single();
+
+    if (product) {
+      const checkoutConfig = product.checkout_config as Record<string, any> || {};
+      const attachedProductId = checkoutConfig.attached_product_id;
+
+      if (attachedProductId) {
+        const { data: attachedFile } = await supabase
+          .from('products')
+          .select('name, product_file_url')
+          .eq('id', attachedProductId)
+          .single();
+
+        if (attachedFile) {
+          finalFileUrl = attachedFile.product_file_url;
+          finalFileName = attachedFile.name;
+        }
+      } else if (product.product_file_url) {
+        finalFileUrl = product.product_file_url;
+        finalFileName = product.name;
+      }
+    }
+  }
+
+  if (finalFileUrl) {
+    try {
+      const response = await fetch(finalFileUrl);
+      if (response.ok) {
+        const arrayBuffer = await response.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        
+        // Extract filename from URL or fallback
+        let filename = finalFileName || params.productName + '.pdf';
+        if (finalFileUrl.includes('/') && !finalFileName) {
+          const urlParts = finalFileUrl.split('?')[0].split('/');
+          const urlName = urlParts[urlParts.length - 1];
+          if (urlName && urlName.includes('.')) {
+            filename = decodeURIComponent(urlName);
+          }
+        }
+
+        attachments.push({
+          filename,
+          content: buffer,
+        });
+      } else {
+        console.error('Failed to download file for attachment:', response.statusText);
+      }
+    } catch (err) {
+      console.error('Error downloading attachment:', err);
+    }
+  }
+
+  return sendEmail({
+    to: params.customerEmail,
+    subject,
+    html,
+    senderName: template.sender_name,
+    orderId: params.orderId,
+    attachments: attachments.length > 0 ? attachments : undefined,
+  });
+}

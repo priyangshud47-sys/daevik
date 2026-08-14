@@ -1,0 +1,102 @@
+// Funnel Event Tracking
+import { supabase } from '@/lib/supabase';
+import type { FunnelEventInsert } from '@/lib/database.types';
+
+export type FunnelEventType = 'page_view' | 'checkout_start' | 'purchase' | 'abandoned';
+
+export async function logFunnelEvent(params: {
+  productId: string;
+  sessionId: string;
+  eventType: FunnelEventType;
+  metadata?: Record<string, unknown>;
+}): Promise<void> {
+  const event: FunnelEventInsert = {
+    product_id: params.productId,
+    session_id: params.sessionId,
+    event_type: params.eventType,
+    metadata: (params.metadata || {}) as Record<string, string>,
+  };
+
+  const { error } = await supabase.from('funnel_events').insert(event);
+
+  if (error) {
+    console.error('Failed to log funnel event:', error);
+  }
+}
+
+// Detect abandoned checkouts: sessions with checkout_start but no purchase within timeout
+export async function detectAbandonedCarts(timeoutMinutes = 30): Promise<number> {
+  const cutoff = new Date(Date.now() - timeoutMinutes * 60 * 1000).toISOString();
+
+  // Find checkout_start events older than timeout that have no matching purchase
+  const { data: abandonedSessions, error } = await supabase
+    .rpc('detect_abandoned_carts', { cutoff_time: cutoff });
+
+  if (error) {
+    // If RPC doesn't exist, use a manual query approach
+    const { data: checkoutStarts } = await supabase
+      .from('funnel_events')
+      .select('session_id, product_id')
+      .eq('event_type', 'checkout_start')
+      .lt('created_at', cutoff);
+
+    if (!checkoutStarts || checkoutStarts.length === 0) return 0;
+
+    let abandonedCount = 0;
+    for (const session of checkoutStarts) {
+      const { data: purchase } = await supabase
+        .from('funnel_events')
+        .select('id')
+        .eq('session_id', session.session_id)
+        .eq('event_type', 'purchase')
+        .limit(1);
+
+      const { data: alreadyMarked } = await supabase
+        .from('funnel_events')
+        .select('id')
+        .eq('session_id', session.session_id)
+        .eq('event_type', 'abandoned')
+        .limit(1);
+
+      if ((!purchase || purchase.length === 0) && (!alreadyMarked || alreadyMarked.length === 0)) {
+        await logFunnelEvent({
+          productId: session.product_id || '',
+          sessionId: session.session_id,
+          eventType: 'abandoned',
+        });
+        abandonedCount++;
+      }
+    }
+
+    return abandonedCount;
+  }
+
+  return abandonedSessions?.length || 0;
+}
+
+// Get funnel stats for a product
+export async function getFunnelStats(productId?: string): Promise<{
+  page_views: number;
+  checkout_starts: number;
+  purchases: number;
+  abandoned: number;
+}> {
+  let query = supabase.from('funnel_events').select('event_type');
+
+  if (productId) {
+    query = query.eq('product_id', productId);
+  }
+
+  const { data, error } = await query;
+
+  if (error || !data) {
+    return { page_views: 0, checkout_starts: 0, purchases: 0, abandoned: 0 };
+  }
+
+  return {
+    page_views: data.filter(e => e.event_type === 'page_view').length,
+    checkout_starts: data.filter(e => e.event_type === 'checkout_start').length,
+    purchases: data.filter(e => e.event_type === 'purchase').length,
+    abandoned: data.filter(e => e.event_type === 'abandoned').length,
+  };
+}
