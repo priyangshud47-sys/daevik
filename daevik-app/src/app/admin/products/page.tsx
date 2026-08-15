@@ -179,7 +179,7 @@ export default function ProductsPage() {
       }
 
       // 2. Update Product
-      const productRes = await fetch(`/api/admin/products/${editingProduct.id}`, {
+      const productRes = await fetch(`/api/admin/products/${editingProduct.slug}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -207,7 +207,7 @@ export default function ProductsPage() {
     
     setSaving(true);
     try {
-      const res = await fetch(`/api/admin/products/${productToDelete.id}`, {
+      const res = await fetch(`/api/admin/products/${productToDelete.slug}`, {
         method: 'DELETE',
       });
       
