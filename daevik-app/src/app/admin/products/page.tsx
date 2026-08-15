@@ -19,6 +19,9 @@ export default function ProductsPage() {
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+
   // New product form state
   const [name, setName] = useState('');
   const [price, setPrice] = useState('149');
@@ -126,8 +129,95 @@ export default function ProductsPage() {
       setFile(null);
       fetchProducts();
 
-    } catch (error: any) {
-      setToast({ message: error.message || 'Something went wrong', type: 'error' });
+    } catch (error: unknown) {
+      setToast({ message: error instanceof Error ? error.message : 'Something went wrong', type: 'error' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const openEditModal = (product: Product) => {
+    setEditingProduct(product);
+    setName(product.name);
+    setPrice(product.price.toString());
+    setDescription(product.description || '');
+    setFile(null); // Optional to update file
+  };
+
+  const closeEditModal = () => {
+    setEditingProduct(null);
+    setName('');
+    setPrice('149');
+    setDescription('');
+    setFile(null);
+  };
+
+  const handleEditProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingProduct || !name || !price) {
+      setToast({ message: 'Name and price are required.', type: 'error' });
+      return;
+    }
+
+    setSaving(true);
+    let productFileUrl = editingProduct.product_file_url;
+
+    try {
+      // 1. Upload File (Optional)
+      if (file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        const uploadRes = await fetch('/api/admin/upload', {
+          method: 'POST',
+          body: formData,
+        });
+        
+        if (!uploadRes.ok) throw new Error('Failed to upload new file');
+        const uploadData = await uploadRes.json();
+        productFileUrl = uploadData.url;
+      }
+
+      // 2. Update Product
+      const productRes = await fetch(`/api/admin/products/${editingProduct.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          price: parseFloat(price),
+          description,
+          product_file_url: productFileUrl,
+        }),
+      });
+
+      if (!productRes.ok) throw new Error('Failed to update product');
+
+      setToast({ message: 'Product updated successfully!', type: 'success' });
+      closeEditModal();
+      fetchProducts();
+    } catch (error: unknown) {
+      setToast({ message: error instanceof Error ? error.message : 'Something went wrong', type: 'error' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteProduct = async () => {
+    if (!productToDelete) return;
+    
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/admin/products/${productToDelete.id}`, {
+        method: 'DELETE',
+      });
+      
+      if (!res.ok) throw new Error('Failed to delete product');
+      
+      setToast({ message: 'Product deleted successfully!', type: 'success' });
+      setProductToDelete(null);
+      fetchProducts();
+    } catch (error: unknown) {
+      setToast({ message: error instanceof Error ? error.message : 'Something went wrong', type: 'error' });
     } finally {
       setSaving(false);
     }
@@ -166,6 +256,7 @@ export default function ProductsPage() {
                 <th>Price</th>
                 <th>File Attached</th>
                 <th style={{ textAlign: 'right' }}>Created At</th>
+                <th style={{ textAlign: 'right' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -186,6 +277,20 @@ export default function ProductsPage() {
                     )}
                   </td>
                   <td style={{ textAlign: 'right', color: 'var(--color-text-muted)' }}>{new Date(product.created_at).toLocaleDateString()}</td>
+                  <td style={{ textAlign: 'right' }}>
+                    <div className="flex gap-2 justify-end">
+                      <button className="btn btn-ghost btn-sm" onClick={() => openEditModal(product)}>
+                        Edit
+                      </button>
+                      <button 
+                        className="btn btn-ghost btn-sm" 
+                        onClick={() => setProductToDelete(product)}
+                        style={{ color: 'var(--color-danger)' }}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -256,7 +361,13 @@ export default function ProductsPage() {
                 <button 
                   type="button" 
                   className="btn btn-ghost" 
-                  onClick={() => setShowAddModal(false)}
+                  onClick={() => {
+                    setShowAddModal(false);
+                    setName('');
+                    setPrice('149');
+                    setDescription('');
+                    setFile(null);
+                  }}
                   disabled={saving}
                 >
                   Cancel
@@ -270,6 +381,108 @@ export default function ProductsPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Product Modal */}
+      {editingProduct && (
+        <div className="modal-backdrop" style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
+          <div className="card" style={{ width: '100%', maxWidth: '500px', margin: '20px' }}>
+            <h2 className="text-xl font-bold mb-2">Edit Product</h2>
+            <p className="text-secondary mb-6">Update details for {editingProduct.name}.</p>
+            
+            <form onSubmit={handleEditProduct} className="space-y-4" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div>
+                <label className="text-sm font-semibold mb-1 block">Product Name</label>
+                <input 
+                  type="text" 
+                  value={name} 
+                  onChange={(e) => setName(e.target.value)} 
+                  required
+                  style={{ width: '100%', padding: '10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)' }}
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-semibold mb-1 block">Price (₹)</label>
+                <input 
+                  type="number" 
+                  value={price} 
+                  onChange={(e) => setPrice(e.target.value)} 
+                  required
+                  style={{ width: '100%', padding: '10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)' }}
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-semibold mb-1 block">Description (Optional)</label>
+                <textarea 
+                  value={description} 
+                  onChange={(e) => setDescription(e.target.value)} 
+                  rows={3}
+                  style={{ width: '100%', padding: '10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)' }}
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-semibold mb-1 block">Replace File (Optional)</label>
+                <input 
+                  type="file" 
+                  onChange={handleFileChange} 
+                  style={{ width: '100%', padding: '10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)' }}
+                />
+                <p className="text-xs text-muted mt-1">Leave empty to keep the existing file.</p>
+              </div>
+
+              <div className="flex justify-end gap-3 mt-6">
+                <button 
+                  type="button" 
+                  className="btn btn-ghost" 
+                  onClick={closeEditModal}
+                  disabled={saving}
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  className="btn btn-primary"
+                  disabled={saving}
+                >
+                  {saving ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {productToDelete && (
+        <div className="modal-backdrop" style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 60 }}>
+          <div className="card" style={{ width: '100%', maxWidth: '400px', margin: '20px', textAlign: 'center' }}>
+            <h2 className="text-xl font-bold mb-2">Delete Product</h2>
+            <p className="text-secondary mb-6">Are you sure you want to delete <strong>{productToDelete.name}</strong>? This action cannot be undone.</p>
+            
+            <div className="flex justify-center gap-3">
+              <button 
+                type="button" 
+                className="btn btn-ghost" 
+                onClick={() => setProductToDelete(null)}
+                disabled={saving}
+              >
+                Cancel
+              </button>
+              <button 
+                type="button" 
+                className="btn btn-primary"
+                style={{ backgroundColor: 'var(--color-danger)', borderColor: 'var(--color-danger)' }}
+                onClick={handleDeleteProduct}
+                disabled={saving}
+              >
+                {saving ? 'Deleting...' : 'Yes, Delete'}
+              </button>
+            </div>
           </div>
         </div>
       )}
