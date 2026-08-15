@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import type { Product } from '@/lib/database.types';
 
+import { hideProductUrls } from '@/lib/utils';
+
 export const revalidate = 60; // ISR: revalidate every 60 seconds
 
 async function getProducts(): Promise<Product[]> {
@@ -16,7 +18,7 @@ async function getProducts(): Promise<Product[]> {
     return [];
   }
 
-  return data || [];
+  return (data || []).map(p => hideProductUrls(p));
 }
 
 export default async function HomePage() {

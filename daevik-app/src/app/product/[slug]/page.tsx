@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
+import { hideProductUrls } from '@/lib/utils';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -31,16 +32,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ProductLandingPage({ params }: Props) {
   const { slug } = await params;
 
-  const { data: product, error } = await supabase
+  const { data: rawProduct, error } = await supabase
     .from('products')
     .select('*')
     .eq('slug', slug)
     .eq('status', 'live')
     .single();
 
-  if (error || !product) {
+  if (error || !rawProduct) {
     notFound();
   }
+
+  const product = hideProductUrls(rawProduct);
 
   // If product has custom landing page HTML, render it in an iframe
   if (product.landing_page_html || product.landing_page_url) {

@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 
 import { supabase } from '@/lib/supabase';
+import { hideProductUrls } from '@/lib/utils';
 
 export async function GET(
   request: NextRequest,
@@ -24,7 +25,7 @@ export async function GET(
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
-  return NextResponse.json(data);
+  return NextResponse.json(hideProductUrls(data));
 }
 
 function extractStoragePath(url: string | null) {
@@ -94,7 +95,7 @@ export async function PUT(
       }
     }
 
-    return NextResponse.json(data);
+    return NextResponse.json(hideProductUrls(data));
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Internal server error' },

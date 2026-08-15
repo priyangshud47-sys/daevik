@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import TrackPurchase from '@/components/TrackPurchase';
+import { hideSupabaseUrl } from '@/lib/utils';
 
 export default async function ThankYouPage({
   params,
@@ -69,11 +70,11 @@ export default async function ThankYouPage({
       .single();
       
     if (attachedFile) {
-      downloadUrl = attachedFile.product_file_url;
+      downloadUrl = hideSupabaseUrl(attachedFile.product_file_url);
       fileName = attachedFile.name;
     }
   } else if (project.product_file_url) {
-    downloadUrl = project.product_file_url;
+    downloadUrl = hideSupabaseUrl(project.product_file_url);
     fileName = project.name;
   }
 

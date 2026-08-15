@@ -1,6 +1,7 @@
 // Public Product API — fetch product by slug for checkout (no auth required)
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
+import { hideProductUrls } from '@/lib/utils';
 
 export async function GET(
   request: NextRequest,
@@ -19,5 +20,5 @@ export async function GET(
     return NextResponse.json({ error: 'Product not found' }, { status: 404 });
   }
 
-  return NextResponse.json(data);
+  return NextResponse.json(hideProductUrls(data));
 }

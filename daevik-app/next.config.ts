@@ -9,6 +9,14 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async rewrites() {
+    return [
+      {
+        source: '/cdn/:path*',
+        destination: `${process.env.SUPABASE_URL}/storage/v1/object/public/:path*`,
+      },
+    ];
+  },
   // Allow uploaded landing page HTML to be served in iframes
   async headers() {
     return [
