@@ -46,28 +46,35 @@ export async function sendEmail(params: SendEmailParams, maxRetries = 3): Promis
   let lastError: string | null = null;
 
   // Create email log entry
-  const { data: logEntry } = await supabase
+  const { data: logEntry, error: logError } = await supabase
     .from('email_logs')
     .insert({
       order_id: params.orderId || null,
       customer_email: params.to,
       subject: params.subject,
       status: 'pending',
-      attempts: 0,
     })
     .select()
     .single();
+
+  if (logError) {
+    console.error('Failed to create email log:', logError);
+  }
 
   while (attempts < maxRetries) {
     attempts++;
     try {
       // 1. Check if SMTP is configured and active
-      const { data: smtpConfig } = await supabase
+      const { data: smtpConfig, error: smtpError } = await supabase
         .from('smtp_configs')
         .select('*')
         .eq('active', true)
         .limit(1)
         .single();
+
+      if (smtpError && smtpError.code !== 'PGRST116') {
+        console.error('SMTP config fetch error:', smtpError);
+      }
 
       if (smtpConfig) {
         // Send via Nodemailer (SMTP)
@@ -107,7 +114,6 @@ export async function sendEmail(params: SendEmailParams, maxRetries = 3): Promis
           .from('email_logs')
           .update({
             status: 'sent',
-            attempts,
             sent_at: new Date().toISOString(),
           })
           .eq('id', logEntry.id);
@@ -127,7 +133,6 @@ export async function sendEmail(params: SendEmailParams, maxRetries = 3): Promis
       .from('email_logs')
       .update({
         status: 'failed',
-        attempts,
         error_message: lastError,
       })
       .eq('id', logEntry.id);
