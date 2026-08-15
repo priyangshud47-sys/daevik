@@ -714,11 +714,11 @@ export default function ZeroInvestmentGuidePage() {
         .page-img-v2::before {
           content: ''; position: absolute; inset: 0; opacity: 0.15;
           background-image: radial-gradient(#000 1px, transparent 1px);
-          background-size: 14px 14px; z-index: 1; pointer-events: none;
+          background-size: 14px 14px; z-index: 0; pointer-events: none;
         }
         
         .page-icon { 
-          z-index: 2; color: #1e293b; background: rgba(255,255,255,0.8); 
+          position: relative; z-index: 10; color: #1e293b; background: rgba(255,255,255,0.8); 
           padding: 18px; border-radius: 50%; box-shadow: 0 8px 25px rgba(0,0,0,0.1); 
           backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
           transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -727,12 +727,13 @@ export default function ZeroInvestmentGuidePage() {
         .preview-page:hover .page-icon { transform: scale(1.2) rotate(8deg); background: #ffffff; color: var(--blue); }
         
         .page-glass-badge {
-          position: absolute; bottom: 20px; left: 12px; right: 12px; z-index: 2;
+          position: absolute; bottom: 20px; left: 12px; right: 12px; z-index: 10;
           background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px); padding: 10px 8px; border-radius: 8px;
-          border: 1px solid rgba(255, 255, 255, 0.9); font-size: 0.75rem; font-weight: 800;
+          -webkit-backdrop-filter: blur(12px); padding: 10px 4px; border-radius: 8px;
+          border: 1px solid rgba(255, 255, 255, 0.9); font-size: 0.7rem; font-weight: 800;
           color: #0f172a; text-transform: uppercase; letter-spacing: 0.05em;
           box-shadow: 0 4px 15px rgba(0,0,0,0.08); transition: all 0.3s ease;
+          display: flex; align-items: center; justify-content: center;
         }
         
         .preview-page:hover .page-glass-badge {
