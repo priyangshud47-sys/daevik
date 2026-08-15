@@ -9,6 +9,14 @@ const XCircle = () => <svg viewBox="0 0 24 24" width="24" height="24" stroke="cu
 const ArrowRight = () => <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>;
 const ChevronDown = ({ className = '' }) => <svg className={className} viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>;
 
+// Premium Section Icons
+const ListIcon = () => <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>;
+const RupeeIcon = () => <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 3h12M6 8h12M6 13l7.5-7.5M6 13h3c3.314 0 6-2.686 6-6s-2.686-6-6-6"></path><path d="M9 13l7.5 8"></path></svg>;
+const SparkleIcon = () => <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.912 5.813a2 2 0 001.275 1.275L21 12l-5.813 1.912a2 2 0 00-1.275 1.275L12 21l-1.912-5.813a2 2 0 00-1.275-1.275L3 12l5.813-1.912a2 2 0 001.275-1.275L12 3z"></path></svg>;
+const FileIcon = () => <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>;
+const UsersIcon = () => <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>;
+const CalendarIcon = () => <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>;
+
 const CHECKOUT_URL = "/checkout/zero-investment-guide";
 
 export default function ZeroInvestmentGuidePage() {
@@ -349,29 +357,53 @@ export default function ZeroInvestmentGuidePage() {
             <p className="text-center mb-10 text-lg">See exactly what you're getting before you buy.</p>
             
             <div className="preview-grid">
-              <div className="preview-page">
-                <div className="page-img placeholder">Table of Contents</div>
+              <div className="preview-page group">
+                <div className="page-img-v2 gradient-1">
+                  <div className="page-icon"><ListIcon /></div>
+                  <div className="page-glass-badge">Table of Contents</div>
+                </div>
                 <p>Table of Contents</p>
+                <div className="preview-page-sub">Page 1-2</div>
               </div>
-              <div className="preview-page">
-                <div className="page-img placeholder">Side Income Methods</div>
+              <div className="preview-page group">
+                <div className="page-img-v2 gradient-2">
+                  <div className="page-icon"><RupeeIcon /></div>
+                  <div className="page-glass-badge">Income Methods</div>
+                </div>
                 <p>Side Income Methods</p>
+                <div className="preview-page-sub">Page 3-15</div>
               </div>
-              <div className="preview-page">
-                <div className="page-img placeholder">AI Tools</div>
-                <p>AI Tools</p>
+              <div className="preview-page group">
+                <div className="page-img-v2 gradient-3">
+                  <div className="page-icon"><SparkleIcon /></div>
+                  <div className="page-glass-badge">AI Toolkit</div>
+                </div>
+                <p>AI Tools List</p>
+                <div className="preview-page-sub">Page 16-20</div>
               </div>
-              <div className="preview-page">
-                <div className="page-img placeholder">Worksheet</div>
-                <p>First 25 Prospects Worksheet</p>
+              <div className="preview-page group">
+                <div className="page-img-v2 gradient-4">
+                  <div className="page-icon"><FileIcon /></div>
+                  <div className="page-glass-badge">Worksheet</div>
+                </div>
+                <p>Prospects Worksheet</p>
+                <div className="preview-page-sub">Printable</div>
               </div>
-              <div className="preview-page">
-                <div className="page-img placeholder">Outreach Tracker</div>
+              <div className="preview-page group">
+                <div className="page-img-v2 gradient-5">
+                  <div className="page-icon"><UsersIcon /></div>
+                  <div className="page-glass-badge">Tracker</div>
+                </div>
                 <p>Outreach Tracker</p>
+                <div className="preview-page-sub">Printable</div>
               </div>
-              <div className="preview-page">
-                <div className="page-img placeholder">30-Day Plan</div>
+              <div className="preview-page group">
+                <div className="page-img-v2 gradient-6">
+                  <div className="page-icon"><CalendarIcon /></div>
+                  <div className="page-glass-badge">Action Plan</div>
+                </div>
                 <p>30-Day Action Plan</p>
+                <div className="preview-page-sub">Page 21-25</div>
               </div>
             </div>
             
@@ -660,11 +692,62 @@ export default function ZeroInvestmentGuidePage() {
         .cred-card p { color: var(--text-muted); margin: 0; font-size: 0.95rem; }
         @media (max-width: 768px) { .large-statement { font-size: 1.5rem; } }
         
-        /* Preview */
-        .preview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 2rem; max-width: 900px; margin: 0 auto; }
-        .preview-page { text-align: center; }
-        .page-img { background: white; width: 100%; aspect-ratio: 1/1.4; border-radius: 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 1rem; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; color: #94A3B8; font-weight: bold; text-transform: uppercase; text-align: center; padding: 10px; }
-        .preview-page p { font-size: 0.875rem; font-weight: 600; color: #334155; margin: 0; }
+        /* Premium Preview Section */
+        .preview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 2.5rem; max-width: 1000px; margin: 0 auto; perspective: 1000px; }
+        .preview-page { text-align: center; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); cursor: pointer; }
+        .preview-page:hover { transform: translateY(-10px) scale(1.03); }
+        
+        .page-img-v2 { 
+          position: relative; width: 100%; aspect-ratio: 1/1.3; border-radius: 12px; 
+          box-shadow: 0 10px 30px -10px rgba(0,0,0,0.15), inset 0 0 0 1px rgba(255,255,255,0.6); 
+          margin-bottom: 1.5rem; overflow: hidden; display: flex; flex-direction: column; 
+          align-items: center; justify-content: center; transition: all 0.4s ease;
+        }
+        
+        .preview-page:hover .page-img-v2 {
+          box-shadow: 0 20px 40px -10px rgba(0,0,0,0.2), inset 0 0 0 2px rgba(255,255,255,1);
+        }
+        
+        /* Vibrant Modern Gradients */
+        .gradient-1 { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); }
+        .gradient-2 { background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%); }
+        .gradient-3 { background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%); }
+        .gradient-4 { background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); }
+        .gradient-5 { background: linear-gradient(135deg, #cfd9df 0%, #e2ebf0 100%); }
+        .gradient-6 { background: linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%); }
+        
+        /* Subtle Overlay Pattern */
+        .page-img-v2::before {
+          content: ''; position: absolute; inset: 0; opacity: 0.15;
+          background-image: radial-gradient(#000 1px, transparent 1px);
+          background-size: 14px 14px; z-index: 1; pointer-events: none;
+        }
+        
+        .page-icon { 
+          z-index: 2; color: #1e293b; background: rgba(255,255,255,0.8); 
+          padding: 18px; border-radius: 50%; box-shadow: 0 8px 25px rgba(0,0,0,0.1); 
+          backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+          transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        .preview-page:hover .page-icon { transform: scale(1.2) rotate(8deg); background: #ffffff; color: var(--blue); }
+        
+        .page-glass-badge {
+          position: absolute; bottom: 20px; left: 12px; right: 12px; z-index: 2;
+          background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px); padding: 10px 8px; border-radius: 8px;
+          border: 1px solid rgba(255, 255, 255, 0.9); font-size: 0.75rem; font-weight: 800;
+          color: #0f172a; text-transform: uppercase; letter-spacing: 0.05em;
+          box-shadow: 0 4px 15px rgba(0,0,0,0.08); transition: all 0.3s ease;
+        }
+        
+        .preview-page:hover .page-glass-badge {
+          background: rgba(255, 255, 255, 0.95); transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+        }
+        
+        .preview-page p { font-size: 1rem; font-weight: 700; color: #0f172a; margin: 0; transition: color 0.3s; }
+        .preview-page:hover p { color: var(--blue); }
+        .preview-page-sub { font-size: 0.8rem; color: #64748b; margin-top: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
         
         /* Not For */
         .honesty-box { background: var(--secondary-bg); border: 1px solid var(--border); border-radius: 16px; padding: 3rem 2rem; max-width: 700px; margin: 0 auto; box-shadow: inset 0 2px 4px 0 rgba(0,0,0,0.02); }
