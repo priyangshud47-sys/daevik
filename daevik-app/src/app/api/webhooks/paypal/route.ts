@@ -68,6 +68,11 @@ export async function GET(request: NextRequest) {
         })
         .eq('id', order.id);
 
+      // Dynamically determine the app URL for the email link
+      const host = request.headers.get('host');
+      const protocol = request.headers.get('x-forwarded-proto') || 'https';
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || (host ? `${protocol}://${host}` : 'https://daevik.in');
+
       // Send product delivery email
       if (order.customer && order.product) {
         await sendProductDeliveryEmail({
@@ -75,13 +80,13 @@ export async function GET(request: NextRequest) {
           customerEmail: order.customer.email,
           productName: order.product.name,
           productPrice: `₹${order.amount}`,
-          downloadLink: `${process.env.NEXT_PUBLIC_APP_URL}/thank-you/${order.product.slug}?orderId=${order.id}`,
+          downloadLink: `${appUrl}/thank-you/${order.product.slug}?orderId=${order.id}`,
           orderId: order.id,
           productId: order.product.id,
         });
 
         await trackPurchase({
-          url: `${process.env.NEXT_PUBLIC_APP_URL}/checkout/${order.product.slug}`,
+          url: `${appUrl}/checkout/${order.product.slug}`,
           eventId: `purchase_${order.id}`,
           productName: order.product.name,
           productId: order.product.id,

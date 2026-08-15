@@ -58,7 +58,12 @@ export async function POST(request: NextRequest) {
     }
 
     const orderId = uuidv4();
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const host = request.headers.get('host');
+    const protocol = request.headers.get('x-forwarded-proto') || 'https';
+    let appUrl = process.env.NEXT_PUBLIC_APP_URL;
+    if (!appUrl) {
+      appUrl = host ? `${protocol}://${host}` : 'http://localhost:3000';
+    }
 
     const setSessionCookie = (res: NextResponse) => {
       res.cookies.set('daevik_customer_session', customerId, {
