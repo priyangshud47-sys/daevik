@@ -270,13 +270,13 @@ CREATE TABLE smtp_configs (
 -- RLS Policies for smtp_configs
 ALTER TABLE smtp_configs ENABLE ROW LEVEL SECURITY;
 
--- Allow read access for service role and admin
+-- Allow read access for service role and admin (Service role bypasses RLS)
 CREATE POLICY "Admin can view SMTP configs"
     ON smtp_configs FOR SELECT
-    USING (true);
+    USING (false);
 
 -- Allow full access to admins
 CREATE POLICY "Admin can manage SMTP configs"
     ON smtp_configs FOR ALL
-    USING (true)
-    WITH CHECK (true);
+    USING (false)
+    WITH CHECK (false);

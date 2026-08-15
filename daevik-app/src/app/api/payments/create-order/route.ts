@@ -18,6 +18,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (
+      typeof productSlug !== 'string' || productSlug.length > 100 ||
+      typeof customerName !== 'string' || customerName.length > 100 ||
+      typeof customerEmail !== 'string' || customerEmail.length > 150 || !/^\S+@\S+\.\S+$/.test(customerEmail) ||
+      (customerPhone && (typeof customerPhone !== 'string' || customerPhone.length > 20))
+    ) {
+      return NextResponse.json(
+        { error: 'Invalid input format or length' },
+        { status: 400 }
+      );
+    }
+
     // Fetch product
     const { data: product, error: productError } = await supabase
       .from('products')
@@ -203,7 +215,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Create order error:', error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Internal server error' },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }
