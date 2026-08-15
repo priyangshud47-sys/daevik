@@ -360,50 +360,44 @@ export default function ZeroInvestmentGuidePage() {
               <div className="preview-page group">
                 <div className="page-img-v2 gradient-1">
                   <div className="page-icon"><ListIcon /></div>
-                  <div className="page-glass-badge">Table of Contents</div>
+                  <div className="page-glass-badge text-center">Table of Contents</div>
                 </div>
                 <p>Table of Contents</p>
-                <div className="preview-page-sub">Page 1-2</div>
               </div>
               <div className="preview-page group">
                 <div className="page-img-v2 gradient-2">
                   <div className="page-icon"><RupeeIcon /></div>
-                  <div className="page-glass-badge">Income Methods</div>
+                  <div className="page-glass-badge text-center">10 Income Methods</div>
                 </div>
-                <p>Side Income Methods</p>
-                <div className="preview-page-sub">Page 3-15</div>
+                <p>10 Income Methods</p>
               </div>
               <div className="preview-page group">
                 <div className="page-img-v2 gradient-3">
                   <div className="page-icon"><SparkleIcon /></div>
-                  <div className="page-glass-badge">AI Toolkit</div>
+                  <div className="page-glass-badge text-center">AI Toolkit</div>
                 </div>
                 <p>AI Tools List</p>
-                <div className="preview-page-sub">Page 16-20</div>
               </div>
               <div className="preview-page group">
                 <div className="page-img-v2 gradient-4">
                   <div className="page-icon"><FileIcon /></div>
-                  <div className="page-glass-badge">Worksheet</div>
+                  <div className="page-glass-badge text-center">Worksheet</div>
                 </div>
                 <p>Prospects Worksheet</p>
-                <div className="preview-page-sub">Printable</div>
               </div>
               <div className="preview-page group">
                 <div className="page-img-v2 gradient-5">
                   <div className="page-icon"><UsersIcon /></div>
-                  <div className="page-glass-badge">Tracker</div>
+                  <div className="page-glass-badge text-center">Tracker</div>
                 </div>
                 <p>Outreach Tracker</p>
-                <div className="preview-page-sub">Printable</div>
               </div>
               <div className="preview-page group">
                 <div className="page-img-v2 gradient-6">
                   <div className="page-icon"><CalendarIcon /></div>
-                  <div className="page-glass-badge">Action Plan</div>
+                  <div className="page-glass-badge text-center">Action Plan</div>
                 </div>
                 <p>30-Day Action Plan</p>
-                <div className="preview-page-sub">Page 21-25</div>
               </div>
             </div>
             
@@ -693,8 +687,8 @@ export default function ZeroInvestmentGuidePage() {
         @media (max-width: 768px) { .large-statement { font-size: 1.5rem; } }
         
         /* Premium Preview Section */
-        .preview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 2.5rem; max-width: 1000px; margin: 0 auto; perspective: 1000px; }
-        .preview-page { text-align: center; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); cursor: pointer; }
+        .preview-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 2.5rem; max-width: 1000px; margin: 0 auto; perspective: 1000px; }
+        .preview-page { text-align: center; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); cursor: pointer; width: 100%; max-width: 180px; }
         .preview-page:hover { transform: translateY(-10px) scale(1.03); }
         
         .page-img-v2 { 
