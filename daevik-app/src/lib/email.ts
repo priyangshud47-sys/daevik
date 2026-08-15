@@ -218,14 +218,22 @@ export async function sendProductDeliveryEmail(params: {
         const arrayBuffer = await response.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
         
-        // Extract filename from URL or fallback
-        let filename = finalFileName || params.productName + '.pdf';
-        if (finalFileUrl.includes('/') && !finalFileName) {
+        // Extract filename and extension
+        let filename = finalFileName || params.productName;
+        let ext = '.pdf'; // Default fallback
+        
+        if (finalFileUrl.includes('/')) {
           const urlParts = finalFileUrl.split('?')[0].split('/');
           const urlName = urlParts[urlParts.length - 1];
           if (urlName && urlName.includes('.')) {
-            filename = decodeURIComponent(urlName);
+            const parts = urlName.split('.');
+            ext = '.' + parts[parts.length - 1];
           }
+        }
+
+        // Ensure filename has the correct extension
+        if (!filename.toLowerCase().endsWith(ext.toLowerCase())) {
+          filename += ext;
         }
 
         attachments.push({
