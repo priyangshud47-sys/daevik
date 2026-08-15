@@ -1,9 +1,16 @@
 // Admin Email Test Send API
 import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/lib/auth';
+
 import { supabase } from '@/lib/supabase';
 import { sendEmail, renderTemplate } from '@/lib/email';
 
 export async function POST(request: NextRequest) {
+  const session = await auth();
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const body = await request.json();
     const { templateId, to } = body;

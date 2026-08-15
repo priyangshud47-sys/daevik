@@ -168,6 +168,8 @@ export async function trackInitiateCheckout(params: {
   userEmail?: string;
   userIp?: string;
   userAgent?: string;
+  fbp?: string;
+  fbc?: string;
   fbPixelId?: string | null;
   fbAccessToken?: string | null;
 }) {
@@ -178,6 +180,8 @@ export async function trackInitiateCheckout(params: {
     userEmail: params.userEmail,
     userIp: params.userIp,
     userAgent: params.userAgent,
+    fbp: params.fbp,
+    fbc: params.fbc,
     fbPixelId: params.fbPixelId,
     fbAccessToken: params.fbAccessToken,
     customData: {

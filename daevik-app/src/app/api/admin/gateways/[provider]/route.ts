@@ -1,11 +1,18 @@
 // Admin Gateway Config Update API
 import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/lib/auth';
+
 import { supabase } from '@/lib/supabase';
 
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ provider: string }> }
 ) {
+  const session = await auth();
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   const { provider } = await params;
   const body = await request.json();
 

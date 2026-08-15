@@ -1,9 +1,16 @@
 import { NextResponse } from 'next/server';
+import { auth } from '@/lib/auth';
+
 import { supabase } from '@/lib/supabase';
 import fs from 'fs';
 import path from 'path';
 
 export async function POST() {
+  const session = await auth();
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const productsDir = path.join(process.cwd(), 'local_products');
     

@@ -1,9 +1,16 @@
 // Admin Products API — List all products and Create new product
 import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/lib/auth';
+
 import { supabase } from '@/lib/supabase';
 
 // GET — List all products (admin)
 export async function GET(request: NextRequest) {
+  const session = await auth();
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   const { searchParams } = new URL(request.url);
   const type = searchParams.get('type');
 
@@ -27,6 +34,11 @@ export async function GET(request: NextRequest) {
 
 // POST — Create a new product
 export async function POST(request: NextRequest) {
+  const session = await auth();
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const body = await request.json();
 

@@ -1,7 +1,14 @@
 import { NextResponse } from 'next/server';
+import { auth } from '@/lib/auth';
+
 import { supabase } from '@/lib/supabase';
 
 export async function GET() {
+  const session = await auth();
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const { data, error } = await supabase
       .from('smtp_configs')
@@ -21,6 +28,11 @@ export async function GET() {
 }
 
 export async function PUT(request: Request) {
+  const session = await auth();
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const body = await request.json();
 

@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/lib/auth';
+
 import { supabase } from '@/lib/supabase';
 import { v4 as uuidv4 } from 'uuid';
 
 export async function POST(request: NextRequest) {
+  const session = await auth();
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
@@ -11,8 +18,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
     }
 
+    // Security: Validate file size (e.g. 50MB limit)
+    const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json({ error: 'File size exceeds 50MB limit' }, { status: 400 });
+    }
+
     // Generate a unique filename using UUID to prevent collisions
-    const fileExt = file.name.split('.').pop();
+    const fileExt = file.name.split('.').pop()?.toLowerCase() || '';
+    
+    // Security: Validate file extension to prevent uploading executables or malicious scripts
+    const allowedExtensions = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'zip', 'rar', 'jpg', 'jpeg', 'png', 'webp', 'gif', 'csv', 'txt', 'mp4', 'mp3'];
+    if (!allowedExtensions.includes(fileExt)) {
+      return NextResponse.json({ error: 'Invalid file type uploaded' }, { status: 400 });
+    }
+
     const fileName = `${uuidv4()}.${fileExt}`;
     const filePath = `${fileName}`;
 
