@@ -27,10 +27,8 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  experimental: {
-    outputFileTracingIncludes: {
-      '/api/admin/products/sync': ['./local_products/**/*'],
-    },
+  outputFileTracingIncludes: {
+    '/api/admin/products/sync': ['./local_products/**/*'],
   },
 };
 
