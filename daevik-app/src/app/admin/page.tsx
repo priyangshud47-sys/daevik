@@ -10,8 +10,6 @@ type DateRange = 'today' | 'yesterday' | '7days' | '30days' | 'custom';
 async function getDashboardData(range: DateRange, customStart?: string, customEnd?: string) {
   // Calculate dates based on IST (UTC+5:30) for accurate day boundaries in India
   const now = new Date();
-  
-  // Create a Date object shifted to IST time
   const istOffset = 5.5 * 60 * 60 * 1000;
   const istNow = new Date(now.getTime() + istOffset);
   
@@ -34,20 +32,8 @@ async function getDashboardData(range: DateRange, customStart?: string, customEn
   // Convert the IST day boundaries back to UTC for the database query
   const startDate = new Date(startDateIst.getTime() - istOffset);
   const endDate = new Date(endDateIst.getTime() - istOffset);
-
   const startDateIso = startDate.toISOString();
   const endDateIso = endDate.toISOString();
-
-  // Filtered sales
-  const { data: filteredOrders } = await supabase
-    .from('orders')
-    .select('amount')
-    .eq('payment_status', 'completed')
-    .gte('created_at', startDateIso)
-    .lt('created_at', endDateIso);
-
-  const filteredSalesCount = filteredOrders?.length || 0;
-  const filteredRevenue = filteredOrders?.reduce((sum, o) => sum + Number(o.amount), 0) || 0;
 
   let rangeLabel = "Today's";
   if (range === 'yesterday') rangeLabel = "Yesterday's";
@@ -55,61 +41,61 @@ async function getDashboardData(range: DateRange, customStart?: string, customEn
   else if (range === '30days') rangeLabel = "Last 30 Days";
   else if (range === 'custom') rangeLabel = "Custom Date";
 
-  // Total sales
-  const { data: allOrders } = await supabase
-    .from('orders')
-    .select('amount')
-    .eq('payment_status', 'completed');
+  // Calculate the start date for the 7-day chart (6 days ago + today)
+  const sevenDaysAgoIst = new Date(istNow.getUTCFullYear(), istNow.getUTCMonth(), istNow.getUTCDate() - 6);
+  const sevenDaysAgoUtc = new Date(sevenDaysAgoIst.getTime() - istOffset).toISOString();
 
+  // Execute all database queries concurrently in a single Promise.all
+  const [
+    { data: filteredOrders },
+    { data: allOrders },
+    { count: customerCount },
+    { data: recentOrders },
+    funnelStats,
+    { data: chartOrdersData }
+  ] = await Promise.all([
+    // 1. Filtered sales (current range)
+    supabase.from('orders').select('amount').eq('payment_status', 'completed').gte('created_at', startDateIso).lt('created_at', endDateIso),
+    // 2. Total sales
+    supabase.from('orders').select('amount').eq('payment_status', 'completed'),
+    // 3. Total customers
+    supabase.from('customers').select('*', { count: 'exact', head: true }),
+    // 4. Recent transactions
+    supabase.from('orders').select('*, product:products(name, slug), customer:customers(name, email)').gte('created_at', startDateIso).lt('created_at', endDateIso).order('created_at', { ascending: false }).limit(10),
+    // 5. Funnel stats
+    getFunnelStats(),
+    // 6. Last 7 days of sales for the chart (ONE query instead of 7)
+    supabase.from('orders').select('amount, created_at').eq('payment_status', 'completed').gte('created_at', sevenDaysAgoUtc)
+  ]);
+
+  const filteredSalesCount = filteredOrders?.length || 0;
+  const filteredRevenue = filteredOrders?.reduce((sum, o) => sum + Number(o.amount), 0) || 0;
   const totalSalesCount = allOrders?.length || 0;
   const totalRevenue = allOrders?.reduce((sum, o) => sum + Number(o.amount), 0) || 0;
 
-  // Total customers
-  const { count: customerCount } = await supabase
-    .from('customers')
-    .select('*', { count: 'exact', head: true });
-
-  // Recent transactions
-  const { data: recentOrders } = await supabase
-    .from('orders')
-    .select(`
-      *,
-      product:products(name, slug),
-      customer:customers(name, email)
-    `)
-    .gte('created_at', startDateIso)
-    .lt('created_at', endDateIso)
-    .order('created_at', { ascending: false })
-    .limit(10);
-
-  // Funnel stats
-  const funnelStats = await getFunnelStats();
-
-  // Last 7 days sales for chart
+  // Process the 7-day chart data in memory
   const last7Days: { date: string; count: number; revenue: number }[] = [];
   for (let i = 6; i >= 0; i--) {
     const date = new Date(istNow);
     date.setUTCDate(date.getUTCDate() - i);
     
-    // Day boundaries in IST converted back to UTC
-    const dayStartIst = new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
-    const dayEndIst = new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() + 1);
-    
-    const dayStart = new Date(dayStartIst.getTime() - istOffset).toISOString();
-    const dayEnd = new Date(dayEndIst.getTime() - istOffset).toISOString();
+    // Day boundaries in IST converted back to UTC timestamps
+    const dayStartIstObj = new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+    const dayEndIstObj = new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() + 1);
+    const dayStartTime = dayStartIstObj.getTime() - istOffset;
+    const dayEndTime = dayEndIstObj.getTime() - istOffset;
 
-    const { data: dayOrders } = await supabase
-      .from('orders')
-      .select('amount')
-      .eq('payment_status', 'completed')
-      .gte('created_at', dayStart)
-      .lt('created_at', dayEnd);
+    // Filter the fetched orders for this specific day
+    const dayOrders = chartOrdersData?.filter(order => {
+      const orderTime = new Date(order.created_at).getTime();
+      return orderTime >= dayStartTime && orderTime < dayEndTime;
+    }) || [];
 
     // Format the date label using the IST date
     last7Days.push({
       date: date.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', timeZone: 'UTC' }),
-      count: dayOrders?.length || 0,
-      revenue: dayOrders?.reduce((sum, o) => sum + Number(o.amount), 0) || 0,
+      count: dayOrders.length,
+      revenue: dayOrders.reduce((sum, o) => sum + Number(o.amount), 0),
     });
   }
 
