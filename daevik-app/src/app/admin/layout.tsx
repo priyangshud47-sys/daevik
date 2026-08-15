@@ -58,7 +58,7 @@ export default function AdminLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Don't wrap login page in admin layout
-  if (pathname === '/admin/login') {
+  if (pathname === '/admin/login' || pathname === '/login') {
     return <>{children}</>;
   }
 
