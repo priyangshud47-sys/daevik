@@ -18,15 +18,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const email = credentials.email as string;
         const password = credentials.password as string;
 
+        console.log(`[AUTH] Attempting login for email: ${email}`);
+
         // Authenticate directly against Supabase's built-in Auth system
         const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
 
-        if (error || !data.user) {
+        if (error) {
+          console.error('[AUTH] Supabase error during login:', error.message);
           return null;
         }
+        
+        if (!data?.user) {
+          console.error('[AUTH] Supabase login succeeded but no user data returned.');
+          return null;
+        }
+
+        console.log(`[AUTH] Login successful for user: ${data.user.id}`);
 
         return {
           id: data.user.id,
