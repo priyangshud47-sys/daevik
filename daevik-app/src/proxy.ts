@@ -26,6 +26,9 @@ export default auth((req) => {
       return NextResponse.redirect(newUrl);
     }
   }
+
+  // Explicitly return next() for all other routes to prevent NextAuth/Vercel from throwing 403
+  return NextResponse.next();
 });
 
 export const config = {
