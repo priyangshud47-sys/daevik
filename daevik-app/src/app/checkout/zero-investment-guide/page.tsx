@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { trackFbEvent } from '@/lib/fb-client';
 
 const CheckCircle = () => (
   <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round">
@@ -148,15 +149,13 @@ function CheckoutContent() {
     }).catch(() => {});
 
     // Facebook Client-Side Pixel
-    if (typeof window !== 'undefined' && window.fbq) {
-      window.fbq('track', 'InitiateCheckout', {
-        value: product.price,
-        currency: 'INR',
-        content_name: product.name,
-        content_ids: [product.id],
-        content_type: 'product',
-      });
-    }
+    trackFbEvent('InitiateCheckout', {
+      value: product.price,
+      currency: 'INR',
+      content_name: product.name,
+      content_ids: [product.id],
+      content_type: 'product',
+    });
   }, []);
 
   // Check for payment error from redirect

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
+import { trackFbEvent } from '@/lib/fb-client';
 
 interface Product {
   id: string;
@@ -108,15 +109,13 @@ export default function CheckoutPage() {
       }).catch(() => {});
 
       // Facebook Client-Side Pixel
-      if (typeof window !== 'undefined' && window.fbq) {
-        window.fbq('track', 'InitiateCheckout', {
-          value: product.price,
-          currency: 'INR',
-          content_name: product.name,
-          content_ids: [product.id],
-          content_type: 'product',
-        });
-      }
+      trackFbEvent('InitiateCheckout', {
+        value: product.price,
+        currency: 'INR',
+        content_name: product.name,
+        content_ids: [product.id],
+        content_type: 'product',
+      });
     }
   }, [product]);
 
