@@ -21,6 +21,18 @@ const CHECKOUT_URL = "/checkout/zero-investment-guide";
 
 export default function ZeroInvestmentGuidePage() {
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
+
+  // Track Facebook CAPI PageView on load
+  useEffect(() => {
+    fetch('/api/track/capi', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        event: 'PageView',
+        url: window.location.href,
+      }),
+    }).catch(() => {});
+  }, []);
   
   return (
     <>

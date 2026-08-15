@@ -118,7 +118,7 @@ function CheckoutContent() {
     localStorage.setItem(`daevik_checkout_${field}`, value);
   };
 
-  // Track checkout_start funnel event
+  // Track checkout_start funnel event and CAPI InitiateCheckout
   useEffect(() => {
     const sessionId = sessionStorage.getItem('daevik_session') || `session_${Date.now()}_${Math.random().toString(36).slice(2)}`;
     sessionStorage.setItem('daevik_session', sessionId);
@@ -130,6 +130,20 @@ function CheckoutContent() {
         productId: product.id,
         sessionId,
         eventType: 'checkout_start',
+      }),
+    }).catch(() => {});
+
+    // Facebook CAPI InitiateCheckout
+    fetch('/api/track/capi', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        event: 'InitiateCheckout',
+        url: window.location.href,
+        productName: product.name,
+        productId: product.id,
+        value: product.price,
+        currency: 'INR'
       }),
     }).catch(() => {});
   }, []);

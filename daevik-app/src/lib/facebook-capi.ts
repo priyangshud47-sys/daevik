@@ -1,11 +1,11 @@
-// Facebook Conversions API (CAPI) — Server-side event dispatch
 import crypto from 'crypto';
+import { supabase } from '@/lib/supabase';
 
 const FB_PIXEL_ID = process.env.FB_PIXEL_ID || '';
 const FB_ACCESS_TOKEN = process.env.FB_ACCESS_TOKEN || '';
 const FB_TEST_EVENT_CODE = process.env.FB_TEST_EVENT_CODE || '';
 const FB_API_VERSION = 'v18.0';
-const FB_API_URL = `https://graph.facebook.com/${FB_API_VERSION}/${FB_PIXEL_ID}/events`;
+const FB_API_URL = `https://graph.facebook.com/${FB_API_VERSION}`;
 
 type EventName = 'PageView' | 'InitiateCheckout' | 'Purchase' | 'AddToCart';
 
@@ -39,8 +39,30 @@ function hashPII(value: string): string {
 }
 
 export async function sendCAPIEvent(params: CAPIEventParams): Promise<boolean> {
-  const pixelId = params.fbPixelId || FB_PIXEL_ID;
-  const accessToken = params.fbAccessToken || FB_ACCESS_TOKEN;
+  let pixelId = params.fbPixelId || FB_PIXEL_ID;
+  let accessToken = params.fbAccessToken || FB_ACCESS_TOKEN;
+  let testEventCode = FB_TEST_EVENT_CODE;
+
+  // If not provided in params or env, try to fetch from database
+  if (!pixelId || !accessToken) {
+    try {
+      const { data: config } = await supabase
+        .from('fb_capi_config')
+        .select('*')
+        .eq('active', true)
+        .single();
+        
+      if (config && config.pixel_id && config.access_token) {
+        pixelId = config.pixel_id;
+        accessToken = config.access_token;
+        if (config.test_event_code) {
+          testEventCode = config.test_event_code;
+        }
+      }
+    } catch (e) {
+      console.error('Failed to fetch FB CAPI config from DB', e);
+    }
+  }
 
   if (!pixelId || !accessToken) {
     console.warn('Facebook CAPI not configured — skipping event:', params.eventName);
@@ -88,8 +110,8 @@ export async function sendCAPIEvent(params: CAPIEventParams): Promise<boolean> {
     access_token: accessToken,
   };
 
-  if (FB_TEST_EVENT_CODE) {
-    payload.test_event_code = FB_TEST_EVENT_CODE;
+  if (testEventCode) {
+    payload.test_event_code = testEventCode;
   }
 
   try {
