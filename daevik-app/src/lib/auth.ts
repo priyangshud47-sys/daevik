@@ -1,6 +1,5 @@
 import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import bcrypt from 'bcryptjs';
 import { supabase } from '@/lib/supabase';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -19,48 +18,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const email = credentials.email as string;
         const password = credentials.password as string;
 
-        // Check against admin_users table
-        const { data: admin, error } = await supabase
-          .from('admin_users')
-          .select('*')
-          .eq('email', email)
-          .single();
+        // Authenticate directly against Supabase's built-in Auth system
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
 
-        if (error || !admin) {
-          // If no admin exists and this is the default admin, auto-create
-          if (
-            email === process.env.ADMIN_EMAIL &&
-            password === process.env.ADMIN_PASSWORD
-          ) {
-            const hash = await bcrypt.hash(password, 12);
-            const { data: newAdmin } = await supabase
-              .from('admin_users')
-              .insert({
-                email,
-                password_hash: hash,
-              })
-              .select()
-              .single();
-
-            if (newAdmin) {
-              return {
-                id: newAdmin.id,
-                email: newAdmin.email,
-              };
-            }
-          }
-          return null;
-        }
-
-        // Verify password
-        const isValid = await bcrypt.compare(password, admin.password_hash);
-        if (!isValid) {
+        if (error || !data.user) {
           return null;
         }
 
         return {
-          id: admin.id,
-          email: admin.email,
+          id: data.user.id,
+          email: data.user.email,
         };
       },
     }),
