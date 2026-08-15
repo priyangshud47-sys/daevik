@@ -248,3 +248,35 @@ CREATE TRIGGER update_fb_capi_config_updated_at
 CREATE TRIGGER update_admin_users_updated_at
   BEFORE UPDATE ON admin_users
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- --------------------------------------------------------
+-- Table: smtp_configs
+-- Purpose: Store custom SMTP configuration for sending emails
+-- --------------------------------------------------------
+CREATE TABLE smtp_configs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    host TEXT NOT NULL,
+    port INTEGER NOT NULL,
+    secure BOOLEAN NOT NULL DEFAULT true,
+    username TEXT NOT NULL,
+    password TEXT NOT NULL,
+    from_email TEXT NOT NULL,
+    from_name TEXT NOT NULL,
+    active BOOLEAN NOT NULL DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- RLS Policies for smtp_configs
+ALTER TABLE smtp_configs ENABLE ROW LEVEL SECURITY;
+
+-- Allow read access for service role and admin
+CREATE POLICY "Admin can view SMTP configs"
+    ON smtp_configs FOR SELECT
+    USING (true);
+
+-- Allow full access to admins
+CREATE POLICY "Admin can manage SMTP configs"
+    ON smtp_configs FOR ALL
+    USING (true)
+    WITH CHECK (true);

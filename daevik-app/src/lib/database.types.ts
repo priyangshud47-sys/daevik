@@ -274,6 +274,45 @@ export interface Database {
           updated_at?: string;
         };
       };
+      smtp_configs: {
+        Row: {
+          id: string;
+          host: string;
+          port: number;
+          secure: boolean;
+          username: string;
+          password: string;
+          from_email: string;
+          from_name: string;
+          active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          host: string;
+          port: number;
+          secure?: boolean;
+          username: string;
+          password: string;
+          from_email: string;
+          from_name: string;
+          active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          host?: string;
+          port?: number;
+          secure?: boolean;
+          username?: string;
+          password?: string;
+          from_email?: string;
+          from_name?: string;
+          active?: boolean;
+          updated_at?: string;
+        };
+      };
       fb_capi_config: {
         Row: {
           id: string;
@@ -324,6 +363,7 @@ export type EmailLog = Database['public']['Tables']['email_logs']['Row'];
 export type GatewayConfig = Database['public']['Tables']['gateway_configs']['Row'];
 export type FbCapiConfig = Database['public']['Tables']['fb_capi_config']['Row'];
 export type AdminUser = Database['public']['Tables']['admin_users']['Row'];
+export type SmtpConfig = Database['public']['Tables']['smtp_configs']['Row'];
 
 // Extended types with joins
 export type OrderWithDetails = Order & {

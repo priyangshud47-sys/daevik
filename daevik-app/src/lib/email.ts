@@ -1,5 +1,6 @@
-// Email Automation Service (Resend)
+// Email Automation Service (Resend / SMTP)
 import { Resend } from 'resend';
+import * as nodemailer from 'nodemailer';
 import { supabase } from '@/lib/supabase';
 
 let resendInstance: Resend | null = null;
@@ -60,19 +61,44 @@ export async function sendEmail(params: SendEmailParams, maxRetries = 3): Promis
   while (attempts < maxRetries) {
     attempts++;
     try {
-      const { error } = await getResend().emails.send({
-        from: `${params.senderName || 'Daevik'} <${FROM_EMAIL}>`,
-        to: params.to,
-        subject: params.subject,
-        html: params.html,
-        attachments: params.attachments,
-      });
+      // 1. Check if SMTP is configured and active
+      const { data: smtpConfig } = await supabase
+        .from('smtp_configs')
+        .select('*')
+        .eq('active', true)
+        .limit(1)
+        .single();
 
-      if (error) {
-        lastError = error.message;
-        // Wait before retry (exponential backoff)
-        await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempts) * 1000));
-        continue;
+      if (smtpConfig) {
+        // Send via Nodemailer (SMTP)
+        const transporter = nodemailer.createTransport({
+          host: smtpConfig.host,
+          port: smtpConfig.port,
+          secure: smtpConfig.secure,
+          auth: {
+            user: smtpConfig.username,
+            pass: smtpConfig.password,
+          },
+        });
+
+        await transporter.sendMail({
+          from: `"${smtpConfig.from_name || params.senderName || 'Daevik'}" <${smtpConfig.from_email}>`,
+          to: params.to,
+          subject: params.subject,
+          html: params.html,
+          attachments: params.attachments,
+        });
+      } else {
+        // Fallback to Resend
+        const { error } = await getResend().emails.send({
+          from: `${params.senderName || 'Daevik'} <${FROM_EMAIL}>`,
+          to: params.to,
+          subject: params.subject,
+          html: params.html,
+          attachments: params.attachments,
+        });
+
+        if (error) throw new Error(error.message);
       }
 
       // Success — update log
