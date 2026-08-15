@@ -27,6 +27,11 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  experimental: {
+    outputFileTracingIncludes: {
+      '/api/admin/products/sync': ['./local_products/**/*'],
+    },
+  },
 };
 
 export default nextConfig;
