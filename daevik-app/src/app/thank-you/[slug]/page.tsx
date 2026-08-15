@@ -85,6 +85,7 @@ export default async function ThankYouPage({
           currency={order.currency || 'INR'}
           productName={project.name}
           productId={project.id}
+          eventId={`purchase_${order.id}`}
         />
       )}
       <div className="ty-header-bar">
