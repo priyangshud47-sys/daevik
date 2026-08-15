@@ -20,6 +20,16 @@ export async function GET(
   return NextResponse.json(data);
 }
 
+function extractStoragePath(url: string | null) {
+  if (!url) return null;
+  const bucketName = 'product-files';
+  const match = url.match(new RegExp(`${bucketName}/(.+)`));
+  if (match && match[1]) {
+    return decodeURIComponent(match[1].split('?')[0]);
+  }
+  return null;
+}
+
 // PUT — Update product by slug
 export async function PUT(
   request: NextRequest,
@@ -29,6 +39,12 @@ export async function PUT(
 
   try {
     const body = await request.json();
+
+    const { data: existingProduct } = await supabase
+      .from('products')
+      .select('product_file_url')
+      .eq('slug', slug)
+      .single();
 
     // Build update object with only provided fields
     const update: Record<string, unknown> = {};
@@ -54,6 +70,18 @@ export async function PUT(
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
+    // If file was replaced, delete the old one
+    if (
+      existingProduct?.product_file_url && 
+      update.product_file_url && 
+      existingProduct.product_file_url !== update.product_file_url
+    ) {
+      const oldPath = extractStoragePath(existingProduct.product_file_url);
+      if (oldPath) {
+        await supabase.storage.from('product-files').remove([oldPath]);
+      }
+    }
+
     return NextResponse.json(data);
   } catch (error) {
     return NextResponse.json(
@@ -70,6 +98,12 @@ export async function DELETE(
 ) {
   const { slug } = await params;
 
+  const { data: existingProduct } = await supabase
+    .from('products')
+    .select('product_file_url')
+    .eq('slug', slug)
+    .single();
+
   const { error } = await supabase
     .from('products')
     .delete()
@@ -77,6 +111,14 @@ export async function DELETE(
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });
+  }
+
+  // Delete associated file from storage
+  if (existingProduct?.product_file_url) {
+    const oldPath = extractStoragePath(existingProduct.product_file_url);
+    if (oldPath) {
+      await supabase.storage.from('product-files').remove([oldPath]);
+    }
   }
 
   return NextResponse.json({ success: true });
