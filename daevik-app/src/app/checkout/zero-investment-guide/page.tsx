@@ -119,10 +119,16 @@ function CheckoutContent() {
     localStorage.setItem(`daevik_checkout_${field}`, value);
   };
 
+  const checkoutEventId = React.useRef(`checkout_${Date.now()}_${Math.random().toString(36).slice(2)}`);
+  const checkoutEventFired = React.useRef(false);
+
   // Track checkout_start funnel event and CAPI InitiateCheckout
   useEffect(() => {
     const sessionId = sessionStorage.getItem('daevik_session') || `session_${Date.now()}_${Math.random().toString(36).slice(2)}`;
     sessionStorage.setItem('daevik_session', sessionId);
+
+    if (checkoutEventFired.current) return;
+    checkoutEventFired.current = true;
 
     fetch('/api/track', {
       method: 'POST',
@@ -140,6 +146,7 @@ function CheckoutContent() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         event: 'InitiateCheckout',
+        eventId: checkoutEventId.current,
         url: window.location.href,
         productName: product.name,
         productId: product.id,
@@ -155,7 +162,7 @@ function CheckoutContent() {
       content_name: product.name,
       content_ids: [product.id],
       content_type: 'product',
-    });
+    }, { eventID: checkoutEventId.current });
   }, []);
 
   // Check for payment error from redirect

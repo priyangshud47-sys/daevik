@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { trackFbEvent } from '@/lib/fb-client';
 
@@ -78,9 +78,15 @@ export default function CheckoutPage() {
     localStorage.setItem(`daevik_checkout_${field}`, value);
   };
 
+  const checkoutEventId = useRef(`checkout_${Date.now()}_${Math.random().toString(36).slice(2)}`);
+  const checkoutEventFired = useRef(false);
+
   // Track checkout_start funnel event and Facebook CAPI InitiateCheckout
   useEffect(() => {
     if (product) {
+      if (checkoutEventFired.current) return;
+      checkoutEventFired.current = true;
+
       const sessionId = sessionStorage.getItem('daevik_session') || `session_${Date.now()}_${Math.random().toString(36).slice(2)}`;
       sessionStorage.setItem('daevik_session', sessionId);
 
@@ -100,6 +106,7 @@ export default function CheckoutPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           event: 'InitiateCheckout',
+          eventId: checkoutEventId.current,
           url: window.location.href,
           productName: product.name,
           productId: product.id,
@@ -115,7 +122,7 @@ export default function CheckoutPage() {
         content_name: product.name,
         content_ids: [product.id],
         content_type: 'product',
-      });
+      }, { eventID: checkoutEventId.current });
     }
   }, [product]);
 
