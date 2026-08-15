@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
+import TrackPurchase from '@/components/TrackPurchase';
 
 export default async function ThankYouPage({
   params,
@@ -78,6 +79,14 @@ export default async function ThankYouPage({
 
   return (
     <div className="ty-container">
+      {order && project && (
+        <TrackPurchase
+          value={order.amount || 149}
+          currency={order.currency || 'INR'}
+          productName={project.name}
+          productId={project.id}
+        />
+      )}
       <div className="ty-header-bar">
         <div className="ty-header-inner">
           <span className="ty-security-item">

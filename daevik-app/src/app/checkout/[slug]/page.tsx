@@ -106,6 +106,17 @@ export default function CheckoutPage() {
           currency: 'INR'
         }),
       }).catch(() => {});
+
+      // Facebook Client-Side Pixel
+      if (typeof window !== 'undefined' && window.fbq) {
+        window.fbq('track', 'InitiateCheckout', {
+          value: product.price,
+          currency: 'INR',
+          content_name: product.name,
+          content_ids: [product.id],
+          content_type: 'product',
+        });
+      }
     }
   }, [product]);
 

@@ -12,6 +12,9 @@ export const metadata: Metadata = {
   },
 };
 
+import { Suspense } from "react";
+import FacebookPixel from "@/components/FacebookPixel";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -20,6 +23,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
+        <Suspense fallback={null}>
+          <FacebookPixel />
+        </Suspense>
         {children}
       </body>
     </html>
