@@ -657,9 +657,9 @@ export default function ZeroInvestmentGuidePage() {
         .value-line { display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; border-bottom: 1px dashed #CBD5E1; font-weight: 600; }
         .value-item { color: var(--text-main); font-size: 1.125rem; }
         .value-price { color: var(--text-muted); }
-        .value-total { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem 0 0; margin-top: 1rem; font-weight: 700; }
-        .value-total span { color: var(--text-muted); font-size: 1rem; margin-bottom: 0.5rem; }
-        .today-price { font-size: 3rem; color: var(--emerald); line-height: 1; }
+        .value-total { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem 0 0; margin-top: 1rem; font-weight: 700; text-align: center; }
+        .value-total span { color: var(--text-muted); font-size: 1rem; margin-bottom: 0.5rem; text-align: center; }
+        .today-price { font-size: 3rem; color: var(--emerald); line-height: 1; text-align: center; }
         
         /* Who For */
         .who-for { background: var(--primary-bg); }
