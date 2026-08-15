@@ -568,7 +568,7 @@ export default function ZeroInvestmentGuidePage() {
         
         /* Buttons */
         .btn-buy-large {
-          display: flex; align-items: center; justify-content: center;
+          display: flex; align-items: center; justify-content: center; text-align: center;
           background-color: var(--emerald); color: white;
           padding: 18px 32px; font-size: 1.125rem; font-weight: 700;
           border-radius: 8px; text-decoration: none;
