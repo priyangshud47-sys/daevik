@@ -13,9 +13,10 @@ export default auth((req) => {
   // Is this an admin route? (Either on the admin domain, or starts with /admin)
   const isAdminPath = url.pathname.startsWith('/admin');
   const isLoginPage = url.pathname === '/login' || url.pathname === '/admin/login';
+  const isApiRoute = url.pathname.startsWith('/api/');
 
   // Protect Admin Routes
-  if ((hostname === adminDomain || isAdminPath) && !isLoginPage && !isLoggedIn) {
+  if ((hostname === adminDomain || isAdminPath) && !isLoginPage && !isApiRoute && !isLoggedIn) {
     // If not logged in and trying to access admin, redirect to login
     const loginUrl = new URL('/login', `https://${adminDomain}`);
     return NextResponse.redirect(loginUrl);
