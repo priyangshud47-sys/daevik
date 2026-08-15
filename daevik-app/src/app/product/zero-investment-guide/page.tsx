@@ -90,10 +90,6 @@ export default function ZeroInvestmentGuidePage() {
                   src="/product-images/zero-investment-guide.jpg" 
                   alt="Zero Investment Side Income Guide for Indian Students" 
                   className="ebook-mockup"
-                  onError={(e) => {
-                    // Fallback to a placeholder if the exact image isn't available yet
-                    (e.target as HTMLImageElement).src = 'https://placehold.co/600x800/101A35/FFFFFF?text=Zero+Investment+Guide\\n\\nFor+Indian+Students';
-                  }}
                 />
                 
                 {/* Subtle floating elements */}
