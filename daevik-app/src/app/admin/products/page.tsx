@@ -426,13 +426,37 @@ export default function ProductsPage() {
               </div>
 
               <div>
-                <label className="text-sm font-semibold mb-1 block">Replace File (Optional)</label>
+                <label className="text-sm font-semibold mb-3 block">Product File</label>
+                
+                {editingProduct.product_file_url && (
+                  <div className="mb-3 p-3 rounded-md flex items-center justify-between" style={{ backgroundColor: 'var(--color-bg-alt)', border: '1px solid var(--color-border)' }}>
+                    <div className="flex flex-col overflow-hidden">
+                      <span className="text-sm font-medium">Current File</span>
+                      <a 
+                        href={editingProduct.product_file_url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-xs truncate"
+                        style={{ color: 'var(--color-primary)', textDecoration: 'underline' }}
+                      >
+                        {editingProduct.product_file_url.split('/').pop()?.split('?')[0] || 'View File'}
+                      </a>
+                    </div>
+                    <span className="badge badge-success text-xs">Attached</span>
+                  </div>
+                )}
+
+                <label className="text-sm font-semibold mb-1 block">
+                  {editingProduct.product_file_url ? 'Replace File (Optional)' : 'Upload File'}
+                </label>
                 <input 
                   type="file" 
                   onChange={handleFileChange} 
                   style={{ width: '100%', padding: '10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)' }}
                 />
-                <p className="text-xs text-muted mt-1">Leave empty to keep the existing file.</p>
+                {editingProduct.product_file_url && (
+                  <p className="text-xs text-muted mt-1">Leave empty to keep the existing file.</p>
+                )}
               </div>
 
               <div className="flex justify-end gap-3 mt-6">
