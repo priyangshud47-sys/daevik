@@ -8,22 +8,32 @@ import DashboardFilter from './DashboardFilter';
 type DateRange = 'today' | 'yesterday' | '7days' | '30days' | 'custom';
 
 async function getDashboardData(range: DateRange, customStart?: string, customEnd?: string) {
+  // Calculate dates based on IST (UTC+5:30) for accurate day boundaries in India
   const now = new Date();
-  let startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  let endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+  
+  // Create a Date object shifted to IST time
+  const istOffset = 5.5 * 60 * 60 * 1000;
+  const istNow = new Date(now.getTime() + istOffset);
+  
+  let startDateIst = new Date(istNow.getUTCFullYear(), istNow.getUTCMonth(), istNow.getUTCDate());
+  let endDateIst = new Date(istNow.getUTCFullYear(), istNow.getUTCMonth(), istNow.getUTCDate() + 1);
 
   if (range === 'yesterday') {
-    startDate.setDate(startDate.getDate() - 1);
-    endDate.setDate(endDate.getDate() - 1);
+    startDateIst.setUTCDate(startDateIst.getUTCDate() - 1);
+    endDateIst.setUTCDate(endDateIst.getUTCDate() - 1);
   } else if (range === '7days') {
-    startDate.setDate(startDate.getDate() - 7);
+    startDateIst.setUTCDate(startDateIst.getUTCDate() - 7);
   } else if (range === '30days') {
-    startDate.setDate(startDate.getDate() - 30);
+    startDateIst.setUTCDate(startDateIst.getUTCDate() - 30);
   } else if (range === 'custom' && customStart && customEnd) {
-    startDate = new Date(customStart);
-    endDate = new Date(customEnd);
-    endDate.setDate(endDate.getDate() + 1);
+    startDateIst = new Date(customStart);
+    endDateIst = new Date(customEnd);
+    endDateIst.setUTCDate(endDateIst.getUTCDate() + 1);
   }
+
+  // Convert the IST day boundaries back to UTC for the database query
+  const startDate = new Date(startDateIst.getTime() - istOffset);
+  const endDate = new Date(endDateIst.getTime() - istOffset);
 
   const startDateIso = startDate.toISOString();
   const endDateIso = endDate.toISOString();
@@ -78,10 +88,15 @@ async function getDashboardData(range: DateRange, customStart?: string, customEn
   // Last 7 days sales for chart
   const last7Days: { date: string; count: number; revenue: number }[] = [];
   for (let i = 6; i >= 0; i--) {
-    const date = new Date(now);
-    date.setDate(date.getDate() - i);
-    const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate()).toISOString();
-    const dayEnd = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1).toISOString();
+    const date = new Date(istNow);
+    date.setUTCDate(date.getUTCDate() - i);
+    
+    // Day boundaries in IST converted back to UTC
+    const dayStartIst = new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+    const dayEndIst = new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() + 1);
+    
+    const dayStart = new Date(dayStartIst.getTime() - istOffset).toISOString();
+    const dayEnd = new Date(dayEndIst.getTime() - istOffset).toISOString();
 
     const { data: dayOrders } = await supabase
       .from('orders')
@@ -90,8 +105,9 @@ async function getDashboardData(range: DateRange, customStart?: string, customEn
       .gte('created_at', dayStart)
       .lt('created_at', dayEnd);
 
+    // Format the date label using the IST date
     last7Days.push({
-      date: date.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric' }),
+      date: date.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', timeZone: 'UTC' }),
       count: dayOrders?.length || 0,
       revenue: dayOrders?.reduce((sum, o) => sum + Number(o.amount), 0) || 0,
     });
