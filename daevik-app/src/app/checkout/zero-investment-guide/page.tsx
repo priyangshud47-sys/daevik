@@ -395,13 +395,14 @@ function CheckoutContent() {
                   </div>
 
                   <div className="zig-form-group">
-                    <label htmlFor="zig-phone" className="zig-label">Phone Number <span className="zig-optional">(optional)</span></label>
+                    <label htmlFor="zig-phone" className="zig-label">Phone Number <span className="zig-required">*</span></label>
                     <input
                       id="zig-phone"
                       type="tel"
                       className="zig-input"
                       autoComplete="tel"
                       name="tel"
+                      required
                       value={formData.phone}
                       onChange={(e) => handleInputChange('phone', e.target.value)}
                     />
