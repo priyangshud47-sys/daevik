@@ -203,7 +203,7 @@ export async function POST(request: NextRequest) {
         const approveLink = ppOrder.links.find(l => l.rel === 'approve');
 
         return setSessionCookie(NextResponse.json({
-          gateway: 'paypal',
+          gateway: 'pp',
           orderId,
           approveUrl: approveLink?.href,
         }));

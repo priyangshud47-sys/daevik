@@ -205,7 +205,7 @@ function CheckoutContent() {
         case 'payu':
           handlePayUCheckout(data);
           break;
-        case 'paypal':
+        case 'pp':
           window.location.href = data.approveUrl;
           break;
         default:
