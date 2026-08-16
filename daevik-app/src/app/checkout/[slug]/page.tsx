@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { trackFbEvent } from '@/lib/fb-client';
-import PhoneInput from 'react-phone-number-input';
+import PhoneInput, { isValidPhoneNumber } from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 
 
@@ -175,6 +175,12 @@ export default function CheckoutPage() {
 
     setSubmitting(true);
     setError(null);
+
+    if (!formData.phone || !isValidPhoneNumber(formData.phone)) {
+      setError('Please enter a valid phone number for your country.');
+      setSubmitting(false);
+      return;
+    }
 
     try {
       const res = await fetch('/api/payments/create-order', {
