@@ -142,7 +142,6 @@ export async function sendEmail(params: SendEmailParams, maxRetries = 3): Promis
   return false;
 }
 
-// Send product delivery email using the default template
 export async function sendProductDeliveryEmail(params: {
   customerName: string;
   customerEmail: string;
@@ -153,6 +152,7 @@ export async function sendProductDeliveryEmail(params: {
   productId?: string;
   fileUrl?: string | null;
   fileName?: string | null;
+  invoicePdf?: { filename: string; content: Buffer };
 }): Promise<boolean> {
   // Fetch the default email template
   const { data: template } = await supabase
@@ -179,6 +179,11 @@ export async function sendProductDeliveryEmail(params: {
   const html = renderTemplate(template.body, templateData);
 
   const attachments: { filename: string; content: Buffer }[] = [];
+  
+  if (params.invoicePdf) {
+    attachments.push(params.invoicePdf);
+  }
+  
   let finalFileUrl = params.fileUrl;
   let finalFileName = params.fileName;
 

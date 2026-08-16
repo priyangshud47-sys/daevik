@@ -132,6 +132,7 @@ export default function OrdersPage() {
                 <th>Status</th>
                 <th>Transaction ID</th>
                 <th>Date</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -174,6 +175,17 @@ export default function OrdersPage() {
                       hour: '2-digit',
                       minute: '2-digit',
                     })}
+                  </td>
+                  <td>
+                    <a
+                      href={`/api/admin/orders/${order.id}/invoice`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-secondary text-xs"
+                      style={{ padding: '0.25rem 0.5rem' }}
+                    >
+                      Download Bill
+                    </a>
                   </td>
                 </tr>
               ))}

@@ -64,22 +64,9 @@ export function verifyRazorpayPayment(params: RazorpayVerifyParams): boolean {
 }
 
 export function verifyRazorpayWebhookSignature(body: string, signature: string, webhookSecret: string): boolean {
-  try {
-    const expectedSignature = crypto
-      .createHmac('sha256', webhookSecret)
-      .update(body)
-      .digest('hex');
-    
-    const expectedBuffer = Buffer.from(expectedSignature, 'hex');
-    const signatureBuffer = Buffer.from(signature, 'hex');
-
-    if (expectedBuffer.length !== signatureBuffer.length) {
-      return false;
-    }
-
-    return crypto.timingSafeEqual(expectedBuffer, signatureBuffer);
-  } catch (error) {
-    console.error('Signature verification error:', error);
-    return false;
-  }
+  const expectedSignature = crypto
+    .createHmac('sha256', webhookSecret)
+    .update(body)
+    .digest('hex');
+  return expectedSignature === signature;
 }

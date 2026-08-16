@@ -5,6 +5,7 @@ import { verifyPayUResponse } from '@/lib/payments/payu';
 import { sendProductDeliveryEmail } from '@/lib/email';
 import { trackPurchase } from '@/lib/facebook-capi';
 import { logFunnelEvent } from '@/lib/funnel';
+import { generateInvoicePDF } from '@/lib/invoice';
 
 export async function POST(request: NextRequest) {
   try {
@@ -86,6 +87,24 @@ export async function POST(request: NextRequest) {
 
       // Send product delivery email
       if (order.customer && order.product) {
+        let invoicePdf;
+        try {
+          const invoiceBuffer = await generateInvoicePDF({
+            orderId: order.id,
+            date: new Date().toLocaleDateString(),
+            customerName: order.customer.name,
+            customerEmail: order.customer.email,
+            productName: order.product.name,
+            amount: order.amount,
+            currency: order.currency,
+            gateway: 'PayU',
+            transactionId: params.mihpayid || txnId,
+          });
+          invoicePdf = { filename: `Invoice-${order.id.slice(0, 8)}.pdf`, content: invoiceBuffer };
+        } catch (err) {
+          console.error('Failed to generate invoice PDF:', err);
+        }
+
         await sendProductDeliveryEmail({
           customerName: order.customer.name,
           customerEmail: order.customer.email,
@@ -94,6 +113,7 @@ export async function POST(request: NextRequest) {
           downloadLink: `${appUrl}/thank-you/${order.product.slug}?orderId=${order.id}`,
           orderId: order.id,
           productId: order.product.id,
+          invoicePdf,
         });
 
         await trackPurchase({
