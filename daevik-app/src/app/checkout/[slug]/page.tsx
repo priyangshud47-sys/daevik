@@ -419,7 +419,13 @@ export default function CheckoutPage() {
                 placeholder="Enter phone number"
                 defaultCountry={country}
                 value={formData.phone}
-                onChange={(val) => handleInputChange('phone', val || '')}
+                onChange={(val) => {
+                  let newValue = val || '';
+                  if (country === 'IN' && newValue.startsWith('+91') && newValue.length > 13) {
+                    newValue = newValue.slice(0, 13);
+                  }
+                  handleInputChange('phone', newValue);
+                }}
                 required
                 limitMaxLength={true}
               />
