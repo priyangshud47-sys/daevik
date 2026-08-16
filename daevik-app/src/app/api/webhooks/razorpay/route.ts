@@ -56,20 +56,23 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Order not found' }, { status: 404 });
       }
 
-      // Idempotency check: if order is already processed, safely return OK
-      if (order.payment_status === 'completed') {
-        return NextResponse.json({ status: 'already_processed' });
-      }
-
-      // Update order status
-      await supabase
+      // Atomic update for idempotency
+      const { data: updatedOrder, error: updateError } = await supabase
         .from('orders')
         .update({
           payment_status: 'completed',
           ...(paymentEntity && { transaction_id: paymentEntity.id }),
           gateway_response: event.payload,
         })
-        .eq('id', order.id);
+        .eq('id', order.id)
+        .eq('payment_status', 'pending')
+        .select('id')
+        .single();
+
+      // If no row was updated, another concurrent webhook already processed it
+      if (!updatedOrder || updateError) {
+        return NextResponse.json({ status: 'already_processed' });
+      }
 
       // Dynamically determine the app URL for the email link
       const host = request.headers.get('host');

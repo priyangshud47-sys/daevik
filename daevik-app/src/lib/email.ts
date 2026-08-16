@@ -218,7 +218,16 @@ export async function sendProductDeliveryEmail(params: {
 
   if (finalFileUrl) {
     try {
-      const response = await fetch(finalFileUrl);
+      // Fix relative URLs (e.g., /cdn/...) for server-side fetch
+      let fetchUrl = finalFileUrl;
+      if (fetchUrl.startsWith('/cdn/')) {
+        fetchUrl = `${process.env.SUPABASE_URL}/storage/v1/object/public/${fetchUrl.replace('/cdn/', '')}`;
+      } else if (fetchUrl.startsWith('/')) {
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://daevik.in';
+        fetchUrl = `${appUrl}${fetchUrl}`;
+      }
+
+      const response = await fetch(fetchUrl);
       if (response.ok) {
         const arrayBuffer = await response.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
