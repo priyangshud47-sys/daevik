@@ -11,9 +11,9 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { productSlug, customerName, customerEmail, customerPhone } = body;
 
-    if (!productSlug || !customerName || !customerEmail) {
+    if (!productSlug || !customerName || !customerEmail || !customerPhone) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Missing required fields including phone number' },
         { status: 400 }
       );
     }
@@ -138,6 +138,7 @@ export async function POST(request: NextRequest) {
           productName: product.name,
           customerName,
           customerEmail,
+          customerPhone,
         }));
       }
 

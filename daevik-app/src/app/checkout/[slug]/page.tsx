@@ -206,6 +206,7 @@ export default function CheckoutPage() {
     productName: string;
     customerName: string;
     customerEmail: string;
+    customerPhone: string;
     orderId: string;
   }) => {
     // Dynamically load Razorpay script
@@ -225,6 +226,7 @@ export default function CheckoutPage() {
         prefill: {
           name: data.customerName,
           email: data.customerEmail,
+          contact: data.customerPhone,
         },
         theme: {
           color: '#6B1D2A',
@@ -387,7 +389,7 @@ export default function CheckoutPage() {
 
             <div className="form-group">
               <label htmlFor="checkout-phone" className="form-label">
-                Phone <span className="text-muted">(optional)</span>
+                Phone Number
               </label>
               <input
                 id="checkout-phone"
@@ -395,6 +397,7 @@ export default function CheckoutPage() {
                 type="tel"
                 className="form-input"
                 placeholder="+91 XXXXX XXXXX"
+                required
                 autoComplete="tel"
                 value={formData.phone}
                 onChange={(e) => handleInputChange('phone', e.target.value)}
