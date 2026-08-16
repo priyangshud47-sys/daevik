@@ -161,21 +161,49 @@ export default function PaymentsPage() {
                 {info.fields.map((field) => (
                   <div key={field.key} className="form-group">
                     <label className="form-label">{field.label}</label>
-                    <input
-                      className="form-input"
-                      type="password"
-                      placeholder={field.placeholder}
-                      value={formData[config.provider]?.[field.key] || ''}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          [config.provider]: {
-                            ...formData[config.provider],
-                            [field.key]: e.target.value,
-                          },
-                        })
-                      }
-                    />
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <input
+                        className="form-input"
+                        style={{ flex: 1 }}
+                        type={field.key === 'webhook_secret' ? 'text' : 'password'}
+                        placeholder={field.placeholder}
+                        value={formData[config.provider]?.[field.key] || ''}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            [config.provider]: {
+                              ...formData[config.provider],
+                              [field.key]: e.target.value,
+                            },
+                          })
+                        }
+                      />
+                      {field.key === 'webhook_secret' && (
+                        <button
+                          type="button"
+                          className="btn btn-secondary"
+                          onClick={() => {
+                            const array = new Uint8Array(16);
+                            crypto.getRandomValues(array);
+                            const randomSecret = Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+                            setFormData({
+                              ...formData,
+                              [config.provider]: {
+                                ...formData[config.provider],
+                                [field.key]: randomSecret,
+                              },
+                            });
+                          }}
+                        >
+                          Generate
+                        </button>
+                      )}
+                    </div>
+                    {field.key === 'webhook_secret' && (
+                      <p className="text-xs text-muted mt-1">
+                        Generate a secure secret here, save settings, and paste this exact string into your {info.name} dashboard webhook settings.
+                      </p>
+                    )}
                   </div>
                 ))}
 
