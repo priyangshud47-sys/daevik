@@ -3,6 +3,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { trackFbEvent } from '@/lib/fb-client';
+import PhoneInput from 'react-phone-number-input';
+import 'react-phone-number-input/style.css';
+
 
 interface Product {
   id: string;
@@ -24,11 +27,24 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [country, setCountry] = useState<any>('IN');
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
   });
+
+
+  useEffect(() => {
+    fetch('https://ipapi.co/json/')
+      .then(res => res.json())
+      .then(data => {
+        if (data.country_code) {
+          setCountry(data.country_code);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Load saved data from localStorage and secure server-side session on initial load
   useEffect(() => {
@@ -391,16 +407,14 @@ export default function CheckoutPage() {
               <label htmlFor="checkout-phone" className="form-label">
                 Phone Number
               </label>
-              <input
+              <PhoneInput
                 id="checkout-phone"
                 name="tel"
-                type="tel"
-                className="form-input"
-                placeholder="+91 XXXXX XXXXX"
-                required
-                autoComplete="tel"
+                placeholder="Enter phone number"
+                defaultCountry={country}
                 value={formData.phone}
-                onChange={(e) => handleInputChange('phone', e.target.value)}
+                onChange={(val) => handleInputChange('phone', val || '')}
+                required
               />
             </div>
 
