@@ -421,6 +421,7 @@ export default function CheckoutPage() {
                 value={formData.phone}
                 onChange={(val) => handleInputChange('phone', val || '')}
                 required
+                limitMaxLength={true}
               />
             </div>
 
