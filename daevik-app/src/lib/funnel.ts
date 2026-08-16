@@ -74,8 +74,11 @@ export async function detectAbandonedCarts(timeoutMinutes = 30): Promise<number>
   return abandonedSessions?.length || 0;
 }
 
-// Get funnel stats for a product
-export async function getFunnelStats(productId?: string): Promise<{
+export async function getFunnelStats(
+  productId?: string,
+  startDate?: string,
+  endDate?: string
+): Promise<{
   page_views: number;
   checkout_starts: number;
   purchases: number;
@@ -85,6 +88,14 @@ export async function getFunnelStats(productId?: string): Promise<{
 
   if (productId) {
     query = query.eq('product_id', productId);
+  }
+
+  if (startDate) {
+    query = query.gte('created_at', startDate);
+  }
+
+  if (endDate) {
+    query = query.lt('created_at', endDate);
   }
 
   const { data, error } = await query;

@@ -65,6 +65,7 @@ export default function DashboardFilter() {
           <option value="yesterday">Yesterday</option>
           <option value="7days">Last 7 Days</option>
           <option value="30days">Last 30 Days</option>
+          <option value="lifetime">Lifetime</option>
           <option value="custom">Custom Range</option>
         </select>
       </div>

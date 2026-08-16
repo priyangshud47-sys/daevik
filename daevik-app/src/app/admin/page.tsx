@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 
 import DashboardFilter from './DashboardFilter';
 
-type DateRange = 'today' | 'yesterday' | '7days' | '30days' | 'custom';
+type DateRange = 'today' | 'yesterday' | '7days' | '30days' | 'lifetime' | 'custom';
 
 async function getDashboardData(range: DateRange, customStart?: string, customEnd?: string) {
   // Calculate dates based on IST (UTC+5:30) for accurate day boundaries in India
@@ -30,48 +30,56 @@ async function getDashboardData(range: DateRange, customStart?: string, customEn
   }
 
   // Convert the IST day boundaries back to UTC for the database query
-  const startDate = new Date(startDateIst.getTime() - istOffset);
-  const endDate = new Date(endDateIst.getTime() - istOffset);
-  const startDateIso = startDate.toISOString();
-  const endDateIso = endDate.toISOString();
+  let startDateIso: string | undefined = undefined;
+  let endDateIso: string | undefined = undefined;
+  
+  if (range !== 'lifetime') {
+    const startDate = new Date(startDateIst.getTime() - istOffset);
+    const endDate = new Date(endDateIst.getTime() - istOffset);
+    startDateIso = startDate.toISOString();
+    endDateIso = endDate.toISOString();
+  }
 
   let rangeLabel = "Today's";
   if (range === 'yesterday') rangeLabel = "Yesterday's";
   else if (range === '7days') rangeLabel = "Last 7 Days";
   else if (range === '30days') rangeLabel = "Last 30 Days";
-  else if (range === 'custom') rangeLabel = "Custom Date";
+  else if (range === 'lifetime') rangeLabel = "Lifetime";
+  else if (range === 'custom') rangeLabel = "Custom Range";
 
   // Calculate the start date for the 7-day chart (6 days ago + today)
   const sevenDaysAgoIst = new Date(istNow.getUTCFullYear(), istNow.getUTCMonth(), istNow.getUTCDate() - 6);
   const sevenDaysAgoUtc = new Date(sevenDaysAgoIst.getTime() - istOffset).toISOString();
 
+  // Prepare queries
+  let ordersQuery = supabase.from('orders').select('amount').eq('payment_status', 'completed');
+  let customersQuery = supabase.from('customers').select('*', { count: 'exact', head: true });
+  let recentOrdersQuery = supabase.from('orders').select('*, product:products(name, slug), customer:customers(name, email)').order('created_at', { ascending: false }).limit(10);
+
+  if (startDateIso && endDateIso) {
+    ordersQuery = ordersQuery.gte('created_at', startDateIso).lt('created_at', endDateIso);
+    customersQuery = customersQuery.gte('created_at', startDateIso).lt('created_at', endDateIso);
+    recentOrdersQuery = recentOrdersQuery.gte('created_at', startDateIso).lt('created_at', endDateIso);
+  }
+
   // Execute all database queries concurrently in a single Promise.all
   const [
     { data: filteredOrders },
-    { data: allOrders },
     { count: customerCount },
     { data: recentOrders },
     funnelStats,
     { data: chartOrdersData }
   ] = await Promise.all([
-    // 1. Filtered sales (current range)
-    supabase.from('orders').select('amount').eq('payment_status', 'completed').gte('created_at', startDateIso).lt('created_at', endDateIso),
-    // 2. Total sales
-    supabase.from('orders').select('amount').eq('payment_status', 'completed'),
-    // 3. Total customers
-    supabase.from('customers').select('*', { count: 'exact', head: true }),
-    // 4. Recent transactions
-    supabase.from('orders').select('*, product:products(name, slug), customer:customers(name, email)').gte('created_at', startDateIso).lt('created_at', endDateIso).order('created_at', { ascending: false }).limit(10),
-    // 5. Funnel stats
-    getFunnelStats(),
-    // 6. Last 7 days of sales for the chart (ONE query instead of 7)
+    ordersQuery,
+    customersQuery,
+    recentOrdersQuery,
+    getFunnelStats(undefined, startDateIso, endDateIso),
+    // Last 7 days of sales for the chart (always 7 days regardless of filter)
     supabase.from('orders').select('amount, created_at').eq('payment_status', 'completed').gte('created_at', sevenDaysAgoUtc)
   ]);
 
-  const filteredSalesCount = filteredOrders?.length || 0;
-  const filteredRevenue = filteredOrders?.reduce((sum, o) => sum + Number(o.amount), 0) || 0;
-  const totalSalesCount = allOrders?.length || 0;
-  const totalRevenue = allOrders?.reduce((sum, o) => sum + Number(o.amount), 0) || 0;
+  const salesCount = filteredOrders?.length || 0;
+  const revenue = filteredOrders?.reduce((sum, o) => sum + Number(o.amount), 0) || 0;
 
   // Process the 7-day chart data in memory
   const last7Days: { date: string; count: number; revenue: number }[] = [];
@@ -100,11 +108,9 @@ async function getDashboardData(range: DateRange, customStart?: string, customEn
   }
 
   return {
-    filteredSalesCount,
-    filteredRevenue,
+    salesCount,
+    revenue,
     rangeLabel,
-    totalSalesCount,
-    totalRevenue,
     customerCount: customerCount || 0,
     recentOrders: recentOrders || [],
     funnelStats,
@@ -130,23 +136,15 @@ export default async function AdminDashboard({
       {/* Stat Cards */}
       <div className="grid grid-cols-4 gap-6 mb-8">
         <div className="stat-card">
-          <div className="stat-card-label">{data.rangeLabel} Sales</div>
-          <div className="stat-card-value">{data.filteredSalesCount}</div>
+          <div className="stat-card-label">{data.rangeLabel} Revenue</div>
+          <div className="stat-card-value">₹{data.revenue.toLocaleString('en-IN')}</div>
           <div className="stat-card-change positive">
-            ₹{data.filteredRevenue.toLocaleString('en-IN')} revenue
+            {data.salesCount} orders
           </div>
         </div>
 
         <div className="stat-card">
-          <div className="stat-card-label">Total Revenue</div>
-          <div className="stat-card-value">₹{data.totalRevenue.toLocaleString('en-IN')}</div>
-          <div className="stat-card-change positive">
-            {data.totalSalesCount} orders
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-card-label">Total Customers</div>
+          <div className="stat-card-label">{data.rangeLabel} Customers</div>
           <div className="stat-card-value">{data.customerCount}</div>
         </div>
 
@@ -224,7 +222,7 @@ export default async function AdminDashboard({
       {/* Recent Transactions */}
       <div className="card">
         <h3 style={{ marginBottom: 'var(--space-4)', fontSize: 'var(--text-lg)' }}>
-          Recent Transactions
+          {data.rangeLabel === 'Lifetime' ? 'All Transactions' : 'Recent Transactions'}
         </h3>
         {data.recentOrders.length > 0 ? (
           <div className="table-container" style={{ border: 'none' }}>
@@ -282,7 +280,7 @@ export default async function AdminDashboard({
           </div>
         ) : (
           <div className="empty-state" style={{ padding: 'var(--space-8)' }}>
-            <h3>No Transactions Yet</h3>
+            <h3>No Transactions {data.rangeLabel === 'Lifetime' ? 'Yet' : 'in This Period'}</h3>
             <p>Orders will appear here once customers make purchases.</p>
           </div>
         )}
