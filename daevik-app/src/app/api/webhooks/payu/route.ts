@@ -94,6 +94,7 @@ export async function POST(request: NextRequest) {
             date: new Date().toLocaleDateString(),
             customerName: order.customer.name,
             customerEmail: order.customer.email,
+            customerPhone: order.customer.phone,
             productName: order.product.name,
             amount: order.amount,
             currency: order.currency,

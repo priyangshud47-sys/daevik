@@ -34,6 +34,7 @@ export async function GET(
       date: new Date(order.created_at).toLocaleDateString(),
       customerName: order.customer.name,
       customerEmail: order.customer.email,
+      customerPhone: order.customer.phone,
       productName: order.product.name,
       amount: order.amount,
       currency: order.currency,
