@@ -10,10 +10,18 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.text();
     const signature = request.headers.get('x-razorpay-signature') || '';
-    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
+    // Fetch gateway configuration from database
+    const { data: gatewayConfig } = await supabase
+      .from('gateway_configs')
+      .select('*')
+      .eq('provider', 'razorpay')
+      .eq('active', true)
+      .single();
+
+    const webhookSecret = gatewayConfig?.webhook_secret || process.env.RAZORPAY_WEBHOOK_SECRET;
 
     if (!webhookSecret) {
-      console.error('CRITICAL: RAZORPAY_WEBHOOK_SECRET is missing from environment variables');
+      console.error('CRITICAL: Razorpay webhook secret is missing from database and env');
       return NextResponse.json({ error: 'Webhook configuration error' }, { status: 500 });
     }
 
