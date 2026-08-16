@@ -414,6 +414,7 @@ export default function CheckoutPage() {
                 Phone Number
               </label>
               <PhoneInput
+                key={country}
                 id="checkout-phone"
                 name="tel"
                 placeholder="Enter phone number"
@@ -428,6 +429,8 @@ export default function CheckoutPage() {
                 }}
                 required
                 limitMaxLength={true}
+                international={true}
+                countryCallingCodeEditable={false}
               />
             </div>
 
