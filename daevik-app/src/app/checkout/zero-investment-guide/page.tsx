@@ -3,6 +3,8 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { trackFbEvent } from '@/lib/fb-client';
+import PhoneInput, { isValidPhoneNumber } from 'react-phone-number-input';
+import 'react-phone-number-input/style.css';
 
 const CheckCircle = () => (
   <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round">
@@ -54,6 +56,7 @@ function CheckoutContent() {
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [country, setCountry] = useState<any>('IN');
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -61,6 +64,18 @@ function CheckoutContent() {
   });
 
   const searchParams = useSearchParams();
+
+  useEffect(() => {
+    fetch('https://ipapi.co/json/')
+      .then(res => res.json())
+      .then(data => {
+        if (data.country_code) {
+          setCountry(data.country_code);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
 
   // Load saved data from localStorage, URL params, and secure server-side session on initial load
   useEffect(() => {
@@ -179,6 +194,12 @@ function CheckoutContent() {
 
     setSubmitting(true);
     setError(null);
+
+    if (!formData.phone || !isValidPhoneNumber(formData.phone)) {
+      setError('Please enter a valid phone number for your country.');
+      setSubmitting(false);
+      return;
+    }
 
     try {
       const res = await fetch('/api/payments/create-order', {
@@ -427,16 +448,29 @@ function CheckoutContent() {
 
                   <div className="zig-form-group">
                     <label htmlFor="zig-phone" className="zig-label">Phone Number <span className="zig-required">*</span></label>
-                    <input
-                      id="zig-phone"
-                      type="tel"
-                      className="zig-input"
-                      autoComplete="tel"
-                      name="tel"
-                      required
-                      value={formData.phone}
-                      onChange={(e) => handleInputChange('phone', e.target.value)}
-                    />
+                    {country && (
+                      <PhoneInput
+                        key={country}
+                        id="zig-phone"
+                        name="tel"
+                        placeholder="Enter phone number"
+                        defaultCountry={country}
+                        value={formData.phone}
+                        onChange={(val) => {
+                          let newValue = val || '';
+                          if (country === 'IN' && newValue.startsWith('+91') && newValue.length > 13) {
+                            newValue = newValue.slice(0, 13);
+                          }
+                          handleInputChange('phone', newValue);
+                        }}
+                        required
+                        limitMaxLength={true}
+                        international={true}
+                        countryCallingCodeEditable={false}
+                        className="zig-input"
+                        style={{ padding: '0 14px' }}
+                      />
+                    )}
                   </div>
 
                   {/* Mobile Price Summary */}
