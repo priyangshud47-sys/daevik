@@ -225,41 +225,38 @@ export default function CheckoutPage() {
     customerPhone: string;
     orderId: string;
   }) => {
-    // Dynamically load Razorpay script
-    const script = document.createElement('script');
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-    script.async = true;
-    document.body.appendChild(script);
+    // Use Razorpay Hosted Checkout via form submission
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = 'https://api.razorpay.com/v1/checkout/embedded';
 
-    script.onload = () => {
-      const options = {
-        key: data.razorpayKeyId,
-        amount: data.amount,
-        currency: data.currency,
-        name: 'Daevik',
-        description: data.productName,
-        order_id: data.razorpayOrderId,
-        prefill: {
-          name: data.customerName,
-          email: data.customerEmail,
-          contact: data.customerPhone ? data.customerPhone.replace(/\+/g, '') : '',
-        },
-        theme: {
-          color: '#6B1D2A',
-        },
-        handler: function () {
-          window.location.href = `/thank-you/${slug}?orderId=${data.orderId}`;
-        },
-        modal: {
-          ondismiss: function () {
-            setSubmitting(false);
-          },
-        },
-      };
+    const phoneString = data.customerPhone ? data.customerPhone.replace(/\+/g, '') : '';
 
-      const rzp = new (window as unknown as { Razorpay: new (opts: typeof options) => { open: () => void } }).Razorpay(options);
-      rzp.open();
+    const fields = {
+      key_id: data.razorpayKeyId,
+      order_id: data.razorpayOrderId,
+      amount: data.amount,
+      name: 'Daevik',
+      description: data.productName,
+      'prefill[name]': data.customerName,
+      'prefill[email]': data.customerEmail,
+      'prefill[contact]': phoneString,
+      callback_url: `${window.location.origin}/thank-you/${slug}?orderId=${data.orderId}`,
+      cancel_url: `${window.location.origin}/checkout/${slug}`,
     };
+
+    for (const [key, value] of Object.entries(fields)) {
+      if (value !== undefined && value !== '') {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = key;
+        input.value = value.toString();
+        form.appendChild(input);
+      }
+    }
+
+    document.body.appendChild(form);
+    form.submit();
   };
 
   const handlePayUCheckout = (data: { formData: Record<string, string> }) => {
