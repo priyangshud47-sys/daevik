@@ -242,7 +242,7 @@ export default function CheckoutPage() {
         prefill: {
           name: data.customerName,
           email: data.customerEmail,
-          contact: data.customerPhone ? data.customerPhone.replace(/\+/g, '') : '',
+          contact: data.customerPhone,
         },
         theme: {
           color: '#6B1D2A',
