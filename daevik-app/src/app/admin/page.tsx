@@ -167,10 +167,10 @@ export default async function AdminDashboard({
         </div>
 
         <div className="stat-card">
-          <div className="stat-card-label">Total Lifetime Sales</div>
-          <div className="stat-card-value">₹{data.lifetimeRevenue.toLocaleString('en-IN')}</div>
-          <div className="stat-card-change">
-            {data.lifetimeSalesCount} total orders
+          <div className="stat-card-label">Total Sales</div>
+          <div className="stat-card-value">{data.lifetimeSalesCount}</div>
+          <div className="stat-card-change positive">
+            ₹{data.lifetimeRevenue.toLocaleString('en-IN')} lifetime
           </div>
         </div>
       </div>
