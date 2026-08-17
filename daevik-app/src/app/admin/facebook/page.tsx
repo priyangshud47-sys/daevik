@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import ConfirmModal from '@/components/ConfirmModal';
+import ToggleSwitch from '@/components/ToggleSwitch';
 
 interface FbConfig {
   id: string;
@@ -172,12 +173,7 @@ export default function FacebookPage() {
                     )}
                   </td>
                   <td>
-                    <button 
-                      className={`btn btn-sm ${c.active ? 'btn-success' : 'btn-secondary'}`} 
-                      onClick={() => toggleActive(c.id, c.active)}
-                    >
-                      {c.active ? 'Active' : 'Inactive'}
-                    </button>
+                    <ToggleSwitch checked={c.active} onChange={() => toggleActive(c.id, c.active)} />
                   </td>
                   <td style={{ textAlign: 'right' }}>
                     <button 
@@ -226,8 +222,10 @@ export default function FacebookPage() {
               <div>
                 <label className="text-sm font-semibold mb-1 block">Pixel ID <span className="text-error">*</span></label>
                 <input 
-                  type="text" 
+                  type="text"
                   required
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   value={form.pixel_id} 
                   onChange={(e) => setForm({ ...form, pixel_id: e.target.value })} 
                   placeholder="e.g. 1234567890123"
