@@ -1,15 +1,8 @@
 export default function DownloadButton({ downloadUrl, fileName }: { downloadUrl: string; fileName: string }) {
-  // We use a pure native anchor tag with the HTML5 download attribute.
-  // Because /cdn/... is a same-origin URL, all browsers (including Safari) 
-  // will respect the download attribute and save the file directly without opening the PDF viewer.
-  
-  const separator = downloadUrl.includes('?') ? '&' : '?';
-  const finalUrl = `${downloadUrl}${separator}download=${encodeURIComponent(fileName)}`;
-
+  // We use a pure native anchor tag pointing to the secure API route
   return (
     <a 
-      href={finalUrl}
-      download={fileName}
+      href={downloadUrl}
       className="ty-btn ty-btn-primary"
     >
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight: '8px'}}>

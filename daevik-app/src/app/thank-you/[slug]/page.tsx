@@ -71,11 +71,11 @@ export default async function ThankYouPage({
       .single();
       
     if (attachedFile) {
-      downloadUrl = hideSupabaseUrl(attachedFile.product_file_url);
+      downloadUrl = `/api/download/${order.id}`;
       fileName = attachedFile.name;
     }
   } else if (project.product_file_url) {
-    downloadUrl = hideSupabaseUrl(project.product_file_url);
+    downloadUrl = `/api/download/${order.id}`;
     fileName = project.name;
   }
 

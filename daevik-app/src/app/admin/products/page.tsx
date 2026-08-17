@@ -269,7 +269,7 @@ export default function ProductsPage() {
                   <td className="font-semibold">₹{Number(product.price).toLocaleString('en-IN')}</td>
                   <td>
                     {product.product_file_url ? (
-                      <a href={product.product_file_url} target="_blank" rel="noopener noreferrer" className="badge badge-success" style={{ textDecoration: 'none' }}>
+                      <a href={`/api/admin/download?url=${encodeURIComponent(product.product_file_url)}`} target="_blank" rel="noopener noreferrer" className="badge badge-success" style={{ textDecoration: 'none' }}>
                         View File
                       </a>
                     ) : (
@@ -433,7 +433,7 @@ export default function ProductsPage() {
                     <div className="flex flex-col overflow-hidden">
                       <span className="text-sm font-medium">Current File</span>
                       <a 
-                        href={editingProduct.product_file_url} 
+                        href={`/api/admin/download?url=${encodeURIComponent(editingProduct.product_file_url)}`} 
                         target="_blank" 
                         rel="noopener noreferrer"
                         className="text-xs truncate"
