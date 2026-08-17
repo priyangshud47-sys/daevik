@@ -1,5 +1,6 @@
 'use client';
 
+import { useToast } from '@/components/ToastProvider';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 
 interface OrderWithDetails {
@@ -32,7 +33,7 @@ export default function OrdersPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [activeTab, setActiveTab] = useState<'orders' | 'customers'>('orders');
   const [customerSearch, setCustomerSearch] = useState('');
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const { showToast } = useToast();
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
   const [selectedOrder, setSelectedOrder] = useState<OrderWithDetails | null>(null);
@@ -139,8 +140,8 @@ export default function OrdersPage() {
     a.download = `daevik-orders-${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    setToast({ message: 'CSV exported successfully!', type: 'success' });
-    setTimeout(() => setToast(null), 3000);
+    showToast('CSV exported successfully!', 'success');
+    
   };
 
   const exportCustomersCSV = () => {
@@ -164,8 +165,8 @@ export default function OrdersPage() {
     a.download = `daevik-customers-${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    setToast({ message: 'Customers CSV exported!', type: 'success' });
-    setTimeout(() => setToast(null), 3000);
+    showToast('Customers CSV exported!', 'success');
+    
   };
 
   // Stats
@@ -821,8 +822,8 @@ export default function OrdersPage() {
                   className="btn btn-sm" style={{ marginLeft: 'var(--space-2)', padding: '2px 6px', fontSize: '10px' }}
                   onClick={() => {
                     navigator.clipboard.writeText(selectedOrder.customer?.email || '');
-                    setToast({ message: 'Email copied!', type: 'success' });
-                    setTimeout(() => setToast(null), 2000);
+                    showToast('Email copied!', 'success');
+                    
                   }}
                 >Copy</button>
               </p>
@@ -848,14 +849,14 @@ export default function OrdersPage() {
                   try {
                     const res = await fetch(`/api/admin/orders/${selectedOrder.id}/resend-email`, { method: 'POST' });
                     if (res.ok) {
-                      setToast({ message: 'Delivery email resent successfully!', type: 'success' });
+                      showToast('Delivery email resent successfully!', 'success');
                     } else {
-                      setToast({ message: 'Failed to resend email', type: 'error' });
+                      showToast('Failed to resend email', 'error');
                     }
                   } catch (e) {
-                    setToast({ message: 'Failed to resend email', type: 'error' });
+                    showToast('Failed to resend email', 'error');
                   }
-                  setTimeout(() => setToast(null), 3000);
+                  
                 }}
               >
                 Resend Delivery Email
@@ -873,7 +874,7 @@ export default function OrdersPage() {
         </div>
       )}
 
-      {toast && <div className={`toast toast-${toast.type}`}>{toast.message}</div>}
+      
     </div>
   );
 }

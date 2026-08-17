@@ -1,5 +1,6 @@
 'use client';
 
+import { useToast } from '@/components/ToastProvider';
 import { useState, useEffect, useCallback } from 'react';
 import ConfirmModal from '@/components/ConfirmModal';
 
@@ -18,7 +19,7 @@ export default function ProductsPage() {
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const { showToast } = useToast();
 
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
@@ -46,12 +47,7 @@ export default function ProductsPage() {
 
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
 
-  useEffect(() => {
-    if (toast) {
-      const timer = setTimeout(() => setToast(null), 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [toast]);
+
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -62,7 +58,7 @@ export default function ProductsPage() {
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !price || !file) {
-      setToast({ message: 'Name, price, and file are required.', type: 'error' });
+      showToast('Name, price, and file are required.', 'error');
       return;
     }
     
@@ -123,7 +119,7 @@ export default function ProductsPage() {
         }
       }
 
-      setToast({ message: 'Product created successfully!', type: 'success' });
+      showToast('Product created successfully!', 'success');
       setShowAddModal(false);
       setName('');
       setPrice('149');
@@ -132,7 +128,7 @@ export default function ProductsPage() {
       fetchProducts();
 
     } catch (error: unknown) {
-      setToast({ message: error instanceof Error ? error.message : 'Something went wrong', type: 'error' });
+      showToast(error instanceof Error ? error.message : 'Something went wrong', 'error');
     } finally {
       setSaving(false);
     }
@@ -157,7 +153,7 @@ export default function ProductsPage() {
   const handleEditProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingProduct || !name || !price) {
-      setToast({ message: 'Name and price are required.', type: 'error' });
+      showToast('Name and price are required.', 'error');
       return;
     }
 
@@ -194,11 +190,11 @@ export default function ProductsPage() {
 
       if (!productRes.ok) throw new Error('Failed to update product');
 
-      setToast({ message: 'Product updated successfully!', type: 'success' });
+      showToast('Product updated successfully!', 'success');
       closeEditModal();
       fetchProducts();
     } catch (error: unknown) {
-      setToast({ message: error instanceof Error ? error.message : 'Something went wrong', type: 'error' });
+      showToast(error instanceof Error ? error.message : 'Something went wrong', 'error');
     } finally {
       setSaving(false);
     }
@@ -215,11 +211,11 @@ export default function ProductsPage() {
       
       if (!res.ok) throw new Error('Failed to delete product');
       
-      setToast({ message: 'Product deleted successfully!', type: 'success' });
+      showToast('Product deleted successfully!', 'success');
       setProductToDelete(null);
       fetchProducts();
     } catch (error: unknown) {
-      setToast({ message: error instanceof Error ? error.message : 'Something went wrong', type: 'error' });
+      showToast(error instanceof Error ? error.message : 'Something went wrong', 'error');
     } finally {
       setSaving(false);
     }
@@ -243,11 +239,7 @@ export default function ProductsPage() {
         </button>
       </div>
 
-      {toast && (
-        <div className={`toast toast-${toast.type}`}>
-          {toast.message}
-        </div>
-      )}
+      
 
       {products.length > 0 ? (
         <div className="table-container">

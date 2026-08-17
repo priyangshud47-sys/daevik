@@ -1,5 +1,6 @@
 'use client';
 
+import { useToast } from '@/components/ToastProvider';
 import { useState, useEffect, useCallback } from 'react';
 
 interface Product {
@@ -17,7 +18,7 @@ export default function SeoPage() {
   const [editing, setEditing] = useState<string | null>(null);
   const [forms, setForms] = useState<Record<string, { seo_title: string; seo_description: string; og_image_url: string }>>({});
   const [saving, setSaving] = useState<string | null>(null);
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const { showToast } = useToast();
 
   const fetchProducts = useCallback(async () => {
     try {
@@ -53,16 +54,16 @@ export default function SeoPage() {
         body: JSON.stringify(forms[product.id]),
       });
       if (res.ok) {
-        setToast({ message: `SEO updated for ${product.name}!`, type: 'success' });
+        showToast(`SEO updated for ${product.name}!`, 'success');
         setEditing(null);
       } else {
         throw new Error('Failed to save');
       }
     } catch {
-      setToast({ message: 'Failed to save SEO settings', type: 'error' });
+      showToast('Failed to save SEO settings', 'error');
     } finally {
       setSaving(null);
-      setTimeout(() => setToast(null), 3000);
+      
     }
   };
 
@@ -179,7 +180,7 @@ export default function SeoPage() {
         </div>
       )}
 
-      {toast && <div className={`toast toast-${toast.type}`}>{toast.message}</div>}
+      
     </div>
   );
 }

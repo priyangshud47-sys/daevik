@@ -1,5 +1,6 @@
 'use client';
 
+import { useToast } from '@/components/ToastProvider';
 import { useState, useEffect, useCallback } from 'react';
 
 interface GatewayConfig {
@@ -45,7 +46,7 @@ export default function PaymentsPage() {
   const [configs, setConfigs] = useState<GatewayConfig[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const { showToast } = useToast();
   const [formData, setFormData] = useState<Record<string, Record<string, string>>>({});
   const [showSecrets, setShowSecrets] = useState<Record<string, boolean>>({});
 
@@ -75,12 +76,7 @@ export default function PaymentsPage() {
 
   useEffect(() => { fetchConfigs(); }, [fetchConfigs]);
 
-  const showToast = (message: string, type: 'success' | 'error') => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
-  };
-
-    const validateConfig = (provider: string) => {
+  const validateConfig = (provider: string) => {
     const data = formData[provider];
     if (!data) return false;
     const info = gatewayInfo[provider];
@@ -275,7 +271,7 @@ export default function PaymentsPage() {
         })}
       </div>
 
-      {toast && <div className={`toast toast-${toast.type}`}>{toast.message}</div>}
+      
     </div>
   );
 }

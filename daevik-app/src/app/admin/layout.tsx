@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import { useState } from 'react';
+import { ToastProvider } from '@/components/ToastProvider';
 
 const navItems = [
   {
@@ -65,6 +66,7 @@ export default function AdminLayout({
   const pageTitle = pageTitles[pathname] || 'Admin';
 
   return (
+    <ToastProvider>
     <div className="admin-layout">
       {/* Mobile overlay */}
       {sidebarOpen && (
@@ -161,5 +163,6 @@ export default function AdminLayout({
         }
       `}</style>
     </div>
+    </ToastProvider>
   );
 }

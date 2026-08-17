@@ -1,5 +1,6 @@
 'use client';
 
+import { useToast } from '@/components/ToastProvider';
 import { useState, useEffect, useCallback } from 'react';
 
 interface EmailTemplate {
@@ -20,7 +21,7 @@ export default function EmailsPage() {
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
   const [testEmail, setTestEmail] = useState('');
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const { showToast } = useToast();
 
   const [smtpForm, setSmtpForm] = useState({
     host: '', port: '587', secure: false, username: '', password: '', from_email: '', from_name: '', active: false,
@@ -77,11 +78,6 @@ export default function EmailsPage() {
     fetchTemplates(); 
     fetchSmtpConfig();
   }, [fetchTemplates, fetchSmtpConfig]);
-
-  const showToast = (message: string, type: 'success' | 'error') => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
-  };
 
   const handleSave = async () => {
     if (!editing) return;
@@ -401,7 +397,7 @@ export default function EmailsPage() {
           </div>
         </div>
 
-      {toast && <div className={`toast toast-${toast.type}`}>{toast.message}</div>}
+      
     </div>
   );
 }

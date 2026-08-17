@@ -1,5 +1,6 @@
 'use client';
 
+import { useToast } from '@/components/ToastProvider';
 import { useState, useEffect, useCallback } from 'react';
 import ConfirmModal from '@/components/ConfirmModal';
 import ToggleSwitch from '@/components/ToggleSwitch';
@@ -21,7 +22,7 @@ export default function FacebookPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [form, setForm] = useState({ pixel_id: '', access_token: '', test_event_code: '' });
   
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const { showToast } = useToast();
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
 
   const fetchConfigs = useCallback(async () => {
@@ -40,11 +41,6 @@ export default function FacebookPage() {
   }, []);
 
   useEffect(() => { fetchConfigs(); }, [fetchConfigs]);
-
-  const showToast = (message: string, type: 'success' | 'error') => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 5000);
-  };
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -135,11 +131,7 @@ export default function FacebookPage() {
         </button>
       </div>
 
-      {toast && (
-        <div className={`toast toast-${toast.type} mb-6`}>
-          {toast.message}
-        </div>
-      )}
+      
 
       {/* List of Pixels */}
       {configs.length > 0 ? (
