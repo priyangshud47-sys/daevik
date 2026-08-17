@@ -132,7 +132,9 @@ export default async function ThankYouPage({
             <div className="ty-download-section">
               <h2 className="ty-section-title">Your digital product is ready</h2>
               <a 
-                href={downloadUrl.includes('?') ? `${downloadUrl}&download=` : `${downloadUrl}?download=`}
+                href={`${downloadUrl}${downloadUrl.includes('?') ? '&' : '?'}download=true`}
+                target="_blank"
+                rel="noopener noreferrer"
                 download={fileName}
                 className="ty-btn ty-btn-primary"
               >
