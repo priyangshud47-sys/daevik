@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { getFunnelStats } from '@/lib/funnel';
+import ProductFilter from './ProductFilter';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,20 +41,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
       <div className="flex justify-between items-center mb-6">
         <h2 style={{ fontSize: 'var(--text-xl)' }}>Funnel Analytics</h2>
         <div>
-          <form>
-            <select 
-              name="product" 
-              className="form-input" 
-              style={{ width: 'auto', display: 'inline-block' }}
-              defaultValue={productFilter}
-              onChange={(e) => { e.target.form?.submit(); }}
-            >
-              <option value="all">All Products</option>
-              {products?.map(p => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))}
-            </select>
-          </form>
+          <ProductFilter products={products} defaultValue={productFilter} />
         </div>
       </div>
       {/* Site-Wide Funnel */}
