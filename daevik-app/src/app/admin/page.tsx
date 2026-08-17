@@ -68,17 +68,21 @@ async function getDashboardData(range: DateRange, customStart?: string, customEn
     { count: customerCount },
     { data: recentOrders },
     funnelStats,
-    { data: chartOrdersData }
+    { data: chartOrdersData },
+    { data: lifetimeOrdersData }
   ] = await Promise.all([
     ordersQuery,
     customersQuery,
     recentOrdersQuery,
     getFunnelStats(undefined, startDateIso, endDateIso),
     // Last 7 days of sales for the chart (always 7 days regardless of filter)
-    supabase.from('orders').select('amount, created_at').eq('payment_status', 'completed').gte('created_at', sevenDaysAgoUtc)
+    supabase.from('orders').select('amount, created_at').eq('payment_status', 'completed').gte('created_at', sevenDaysAgoUtc),
+    supabase.from('orders').select('amount').eq('payment_status', 'completed')
   ]);
 
   const salesCount = filteredOrders?.length || 0;
+  const lifetimeSalesCount = lifetimeOrdersData?.length || 0;
+  const lifetimeRevenue = lifetimeOrdersData?.reduce((sum, o) => sum + Number(o.amount), 0) || 0;
   const revenue = filteredOrders?.reduce((sum, o) => sum + Number(o.amount), 0) || 0;
 
   // Process the 7-day chart data in memory
@@ -115,6 +119,8 @@ async function getDashboardData(range: DateRange, customStart?: string, customEn
     recentOrders: recentOrders || [],
     funnelStats,
     last7Days,
+    lifetimeSalesCount,
+    lifetimeRevenue,
   };
 }
 
@@ -157,6 +163,14 @@ export default async function AdminDashboard({
           </div>
           <div className="stat-card-change">
             {data.funnelStats.purchases} purchases / {data.funnelStats.page_views} views
+          </div>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-card-label">Total Lifetime Sales</div>
+          <div className="stat-card-value">₹{data.lifetimeRevenue.toLocaleString('en-IN')}</div>
+          <div className="stat-card-change">
+            {data.lifetimeSalesCount} total orders
           </div>
         </div>
       </div>
