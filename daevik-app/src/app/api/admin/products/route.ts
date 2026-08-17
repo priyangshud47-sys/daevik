@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
     // Validate payload and strip out any unknown fields (like landing_page_html)
     const validationResult = productSchema.safeParse(body);
     if (!validationResult.success) {
-      return NextResponse.json({ error: 'Invalid payload', details: validationResult.error.errors }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid payload', details: validationResult.error.flatten() }, { status: 400 });
     }
     
     const validData = validationResult.data;

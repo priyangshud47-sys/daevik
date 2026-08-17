@@ -74,7 +74,7 @@ export async function PUT(
     // Validate payload and strip out any unknown fields (like landing_page_html)
     const validationResult = productUpdateSchema.safeParse(body);
     if (!validationResult.success) {
-      return NextResponse.json({ error: 'Invalid payload', details: validationResult.error.errors }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid payload', details: validationResult.error.flatten() }, { status: 400 });
     }
     
     const validData = validationResult.data;
@@ -98,10 +98,10 @@ export async function PUT(
 
     // If file was replaced, delete the old one
     const oldPath = extractStoragePath(existingProduct?.product_file_url as string | null);
-    const newPath = update.product_file_url ? extractStoragePath(update.product_file_url as string | null) : null;
+    const newPath = validData.product_file_url ? extractStoragePath(validData.product_file_url as string | null) : null;
     
     if (oldPath) {
-      if (!update.product_file_url || (newPath && oldPath !== newPath)) {
+      if (!validData.product_file_url || (newPath && oldPath !== newPath)) {
         // File was removed or changed to a different file
         await supabase.storage.from('product-files').remove([oldPath]);
       }
