@@ -4,6 +4,24 @@ import { auth } from '@/lib/auth';
 
 import { supabase } from '@/lib/supabase';
 import { hideProductUrls } from '@/lib/utils';
+import { z } from 'zod';
+
+const productUpdateSchema = z.object({
+  name: z.string().min(1).max(255).optional(),
+  slug: z.string().regex(/^[a-z0-9-]+$/).min(1).max(255).optional(),
+  price: z.number().min(0).optional(),
+  description: z.string().nullable().optional(),
+  tag: z.string().nullable().optional(),
+  thumbnail_url: z.string().url().nullable().optional(),
+  product_file_url: z.string().nullable().optional(),
+  gateway_provider: z.enum(['razorpay', 'payu', 'paypal']).optional(),
+  seo_title: z.string().nullable().optional(),
+  seo_description: z.string().nullable().optional(),
+  og_image_url: z.string().url().nullable().optional(),
+  status: z.enum(['live', 'draft', 'archived']).optional(),
+  checkout_config: z.any().optional(), // allow any json for now
+});
+
 
 export async function GET(
   request: NextRequest,
@@ -53,28 +71,23 @@ export async function PUT(
   try {
     const body = await request.json();
 
+    // Validate payload and strip out any unknown fields (like landing_page_html)
+    const validationResult = productUpdateSchema.safeParse(body);
+    if (!validationResult.success) {
+      return NextResponse.json({ error: 'Invalid payload', details: validationResult.error.errors }, { status: 400 });
+    }
+    
+    const validData = validationResult.data;
+
     const { data: existingProduct } = await supabase
       .from('products')
       .select('product_file_url')
       .eq('slug', slug)
       .single();
 
-    // Build update object with only provided fields
-    const update: Record<string, unknown> = {};
-    const fields = [
-      'name', 'slug', 'price', 'description', 'tag', 'thumbnail_url',
-      'landing_page_html', 'landing_page_url', 'product_file_url',
-      'gateway_provider', 'checkout_config', 'seo_title', 'seo_description', 'og_image_url', 'status'
-    ];
-    for (const field of fields) {
-      if (body[field] !== undefined) {
-        update[field] = body[field];
-      }
-    }
-
     const { data, error } = await supabase
       .from('products')
-      .update(update)
+      .update(validData)
       .eq('slug', slug)
       .select()
       .single();

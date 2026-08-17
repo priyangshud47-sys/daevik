@@ -23,6 +23,11 @@ export async function GET(
       return new NextResponse('Payment not completed', { status: 403 });
     }
 
+    const customerSession = request.cookies.get('daevik_customer_session')?.value;
+    if (!customerSession || customerSession !== order.customer_id) {
+      return new NextResponse('Unauthorized request. Session expired or invalid.', { status: 401 });
+    }
+
     if (!order.product || !order.product.product_file_url) {
       return new NextResponse('Product file not found', { status: 404 });
     }

@@ -4,6 +4,23 @@ import { auth } from '@/lib/auth';
 
 import { supabase } from '@/lib/supabase';
 import { hideProductUrls } from '@/lib/utils';
+import { z } from 'zod';
+
+const productSchema = z.object({
+  name: z.string().min(1).max(255),
+  slug: z.string().regex(/^[a-z0-9-]+$/).min(1).max(255),
+  price: z.number().min(0),
+  description: z.string().nullable().optional(),
+  tag: z.string().nullable().optional(),
+  thumbnail_url: z.string().url().nullable().optional(),
+  product_file_url: z.string().nullable().optional(),
+  gateway_provider: z.enum(['razorpay', 'payu', 'paypal']).default('razorpay'),
+  seo_title: z.string().nullable().optional(),
+  seo_description: z.string().nullable().optional(),
+  og_image_url: z.string().url().nullable().optional(),
+  status: z.enum(['live', 'draft', 'archived']).default('draft'),
+});
+
 
 // GET — List all products (admin)
 export async function GET(request: NextRequest) {
@@ -42,24 +59,19 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
+    
+    // Validate payload and strip out any unknown fields (like landing_page_html)
+    const validationResult = productSchema.safeParse(body);
+    if (!validationResult.success) {
+      return NextResponse.json({ error: 'Invalid payload', details: validationResult.error.errors }, { status: 400 });
+    }
+    
+    const validData = validationResult.data;
 
     const { data, error } = await supabase
       .from('products')
       .insert({
-        name: body.name,
-        slug: body.slug,
-        price: body.price,
-        description: body.description || null,
-        tag: body.tag || null,
-        thumbnail_url: body.thumbnail_url || null,
-        landing_page_html: body.landing_page_html || null,
-        landing_page_url: body.landing_page_url || null,
-        product_file_url: body.product_file_url || null,
-        gateway_provider: body.gateway_provider || 'razorpay',
-        seo_title: body.seo_title || null,
-        seo_description: body.seo_description || null,
-        og_image_url: body.og_image_url || null,
-        status: body.status || 'draft',
+        ...validData
       })
       .select()
       .single();

@@ -20,7 +20,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         console.log(`[AUTH] Attempting login for email: ${email}`);
 
-        // Authenticate directly against Supabase's built-in Auth system
+        // SECURITY NOTE: The `admin_users` table in the database schema is DEPRECATED.
+        // It is dead code. The single source of truth for admin authentication is 
+        // Supabase's built-in Auth system (auth.users).
         const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,

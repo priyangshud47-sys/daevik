@@ -27,10 +27,19 @@ export async function POST(request: NextRequest) {
     // Generate a unique filename using UUID to prevent collisions
     const fileExt = file.name.split('.').pop()?.toLowerCase() || '';
     
-    // Security: Validate file extension to prevent uploading executables or malicious scripts
-    const allowedExtensions = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'zip', 'rar', 'jpg', 'jpeg', 'png', 'webp', 'gif', 'csv', 'txt', 'mp4', 'mp3'];
-    if (!allowedExtensions.includes(fileExt)) {
-      return NextResponse.json({ error: 'Invalid file type uploaded' }, { status: 400 });
+    // Security: Validate file extension and MIME type
+    const allowedExtensions = ['pdf', 'zip', 'rar', 'jpg', 'jpeg', 'png', 'webp'];
+    const allowedMimeTypes = [
+      'application/pdf',
+      'application/zip',
+      'application/x-rar-compressed',
+      'image/jpeg',
+      'image/png',
+      'image/webp'
+    ];
+
+    if (!allowedExtensions.includes(fileExt) || !allowedMimeTypes.includes(file.type)) {
+      return NextResponse.json({ error: 'Invalid file type uploaded. Only PDF, ZIP, RAR, and standard images are allowed.' }, { status: 400 });
     }
 
     const fileName = `${uuidv4()}.${fileExt}`;

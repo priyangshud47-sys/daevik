@@ -45,29 +45,7 @@ export default async function ProductLandingPage({ params }: Props) {
 
   const product = hideProductUrls(rawProduct);
 
-  // If product has custom landing page HTML, render it in an iframe
-  if (product.landing_page_html || product.landing_page_url) {
-    const iframeSrc = product.landing_page_url
-      ? product.landing_page_url
-      : `/api/landing/${product.slug}`;
-
-    return (
-      <div style={{ width: '100vw', height: '100vh', overflow: 'hidden' }}>
-        <iframe
-          src={iframeSrc}
-          style={{
-            width: '100%',
-            height: '100%',
-            border: 'none',
-          }}
-          title={product.name}
-          sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
-        />
-      </div>
-    );
-  }
-
-  // Default product page if no custom landing page is uploaded
+  // Default product page (Safe structured React template)
   return (
     <div className="checkout-layout">
       <div style={{ maxWidth: '800px', margin: '0 auto', padding: 'var(--space-8) var(--space-6)' }}>

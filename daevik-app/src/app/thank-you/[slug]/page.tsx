@@ -16,20 +16,31 @@ export default async function ThankYouPage({
   let { orderId } = await searchParams;
 
   if (!orderId) {
-    // TEMPORARY BYPASS FOR TESTING
-    orderId = "test-order-123";
+    return (
+      <div className="ty-container">
+        <div className="ty-card">
+          <div className="ty-icon ty-icon-error">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+          </div>
+          <h1 className="ty-title">Access Denied</h1>
+          <p className="ty-text">Missing order ID. You need a valid, completed order to access this page.</p>
+          <Link href={`/checkout/${slug}`} className="ty-btn ty-btn-secondary">
+            Return to Checkout
+          </Link>
+        </div>
+        <StyleBlock />
+      </div>
+    );
   }
 
-  // 1. Fetch the order and verify payment
+  // 1. Fetch the order and verify payment and product match
   const { data: order } = await supabase
     .from('orders')
-    .select('*, customer:customers(*)')
+    .select('*, customer:customers(*), product:products(*)')
     .eq('id', orderId)
     .single();
 
-  // TEMPORARY BYPASS FOR TESTING
-  // if (!order || order.payment_status !== 'completed') {
-  if (false) {
+  if (!order || order.payment_status !== 'completed' || !order.product || order.product.slug !== slug) {
     return (
       <div className="ty-container">
         <div className="ty-card">
