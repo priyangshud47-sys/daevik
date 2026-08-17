@@ -84,13 +84,12 @@ export async function PUT(
     }
 
     // If file was replaced, delete the old one
-    if (
-      existingProduct?.product_file_url && 
-      update.product_file_url && 
-      existingProduct.product_file_url !== update.product_file_url
-    ) {
-      const oldPath = extractStoragePath(existingProduct.product_file_url);
-      if (oldPath) {
+    const oldPath = extractStoragePath(existingProduct?.product_file_url as string | null);
+    const newPath = update.product_file_url ? extractStoragePath(update.product_file_url as string | null) : null;
+    
+    if (oldPath) {
+      if (!update.product_file_url || (newPath && oldPath !== newPath)) {
+        // File was removed or changed to a different file
         await supabase.storage.from('product-files').remove([oldPath]);
       }
     }
