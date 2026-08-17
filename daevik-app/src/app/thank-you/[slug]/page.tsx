@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import TrackPurchase from '@/components/TrackPurchase';
 import { hideSupabaseUrl } from '@/lib/utils';
+import DownloadButton from './DownloadButton';
 
 export default async function ThankYouPage({
   params,
@@ -131,20 +132,7 @@ export default async function ThankYouPage({
           {downloadUrl ? (
             <div className="ty-download-section">
               <h2 className="ty-section-title">Your digital product is ready</h2>
-              <a 
-                href={`${downloadUrl}${downloadUrl.includes('?') ? '&' : '?'}download=true`}
-                target="_blank"
-                rel="noopener noreferrer"
-                download={fileName}
-                className="ty-btn ty-btn-primary"
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight: '8px'}}>
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                  <polyline points="7 10 12 15 17 10"></polyline>
-                  <line x1="12" y1="15" x2="12" y2="3"></line>
-                </svg>
-                Download {fileName}
-              </a>
+              <DownloadButton downloadUrl={downloadUrl} fileName={fileName} />
               <p className="ty-email-note">
                 A copy of this link was also sent to <br/><strong>{order?.customer?.email || 'your email address'}</strong>
               </p>
