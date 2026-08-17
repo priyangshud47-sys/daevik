@@ -5,38 +5,23 @@ import { useState } from 'react';
 export default function DownloadButton({ downloadUrl, fileName }: { downloadUrl: string; fileName: string }) {
   const [downloading, setDownloading] = useState(false);
 
-  const handleDownload = async (e: React.MouseEvent<HTMLAnchorElement>) => {
+  const handleDownload = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
-    
-    // If it's not a relative CDN URL, just try the standard download
-    if (!downloadUrl.startsWith('/')) {
-      window.open(`${downloadUrl}${downloadUrl.includes('?') ? '&' : '?'}download=${encodeURIComponent(fileName)}`, '_blank');
-      return;
-    }
-
     setDownloading(true);
-    try {
-      // Fetch the file as a blob to force the browser to download it instead of opening it
-      const res = await fetch(downloadUrl);
-      if (!res.ok) throw new Error('Network response was not ok');
-      const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
-      
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = fileName;
-      document.body.appendChild(a);
-      a.click();
-      
-      // Cleanup
-      window.URL.revokeObjectURL(url);
-      a.remove();
-    } catch (err) {
-      console.error('Download failed, falling back to new tab:', err);
-      window.open(`${downloadUrl}${downloadUrl.includes('?') ? '&' : '?'}download=true`, '_blank');
-    } finally {
+    
+    // We add ?download=filename to force Supabase to send Content-Disposition: attachment
+    const separator = downloadUrl.includes('?') ? '&' : '?';
+    const finalUrl = `${downloadUrl}${separator}download=${encodeURIComponent(fileName)}`;
+    
+    // Direct navigation is the most reliable way across all browsers (including Safari/iOS).
+    // Because the server responds with an "attachment" header, the browser will download it 
+    // and WILL NOT navigate away from the current page.
+    window.location.href = finalUrl;
+
+    // Reset button state after a short delay since we can't perfectly detect when download starts
+    setTimeout(() => {
       setDownloading(false);
-    }
+    }, 2000);
   };
 
   return (
@@ -51,7 +36,7 @@ export default function DownloadButton({ downloadUrl, fileName }: { downloadUrl:
         <polyline points="7 10 12 15 17 10"></polyline>
         <line x1="12" y1="15" x2="12" y2="3"></line>
       </svg>
-      {downloading ? 'Downloading...' : `Download ${fileName}`}
+      {downloading ? 'Starting Download...' : `Download ${fileName}`}
     </a>
   );
 }
