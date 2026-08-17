@@ -88,9 +88,8 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<Buffer> {
         .text(`Date: ${data.date}`, { width: 245 })
         .text(`Gateway: ${data.gateway.toUpperCase()}`, { width: 245 });
 
-      if (data.transactionId) {
-        doc.text(`Transaction ID: ${data.transactionId}`, { width: 245 });
-      }
+      // Display Transaction ID, fallback to Order ID if missing
+      doc.text(`Transaction ID: ${data.transactionId || data.orderId}`, { width: 245 });
 
       doc.moveDown(2);
 

@@ -41,9 +41,8 @@ export async function POST(request: NextRequest) {
         ? event.payload.payment.entity.order_id 
         : event.payload.order.entity.id;
       
-      const paymentEntity = eventType === 'payment.captured' 
-        ? event.payload.payment.entity 
-        : null;
+      // Both payment.captured and order.paid include the payment entity in Razorpay
+      const paymentEntity = event.payload.payment?.entity;
 
       // Find the order by gateway_order_id
       const { data: order } = await supabase
@@ -61,7 +60,8 @@ export async function POST(request: NextRequest) {
         .from('orders')
         .update({
           payment_status: 'completed',
-          ...(paymentEntity && { transaction_id: paymentEntity.id }),
+          // Use payment ID if available, fallback to Razorpay Order ID
+          transaction_id: paymentEntity?.id || razorpayOrderId,
           gateway_response: event.payload,
         })
         .eq('id', order.id)
