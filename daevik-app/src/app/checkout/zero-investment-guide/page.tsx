@@ -246,6 +246,7 @@ function CheckoutContent() {
     productName: string;
     customerName: string;
     customerEmail: string;
+    customerPhone: string;
     orderId: string;
   }) => {
     const script = document.createElement('script');
@@ -264,6 +265,7 @@ function CheckoutContent() {
         prefill: {
           name: data.customerName,
           email: data.customerEmail,
+          contact: data.customerPhone,
         },
         theme: { color: '#16A34A' },
         handler: function () {
