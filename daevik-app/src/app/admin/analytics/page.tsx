@@ -14,7 +14,9 @@ interface ProductFunnel {
   stats: { page_views: number; checkout_starts: number; purchases: number; abandoned: number };
 }
 
-export default async function AnalyticsPage() {
+export default async function AnalyticsPage({ searchParams }: { searchParams: Promise<{ product?: string }> }) {
+  const resolvedSearchParams = await searchParams;
+  const productFilter = resolvedSearchParams.product || "all";
   // Fetch all products
   const { data: products } = await supabase
     .from('products')
@@ -31,10 +33,29 @@ export default async function AnalyticsPage() {
   }
 
   // Site-wide funnel
-  const siteStats = await getFunnelStats();
+  const siteStats = productFilter !== 'all' ? await getFunnelStats(productFilter) : await getFunnelStats();
 
   return (
     <div className="animate-fade-in">
+      <div className="flex justify-between items-center mb-6">
+        <h2 style={{ fontSize: 'var(--text-xl)' }}>Funnel Analytics</h2>
+        <div>
+          <form>
+            <select 
+              name="product" 
+              className="form-input" 
+              style={{ width: 'auto', display: 'inline-block' }}
+              defaultValue={productFilter}
+              onChange={(e) => { e.target.form?.submit(); }}
+            >
+              <option value="all">All Products</option>
+              {products?.map(p => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+          </form>
+        </div>
+      </div>
       {/* Site-Wide Funnel */}
       <div className="card mb-8">
         <h3 style={{ fontSize: 'var(--text-lg)', marginBottom: 'var(--space-6)' }}>
@@ -61,6 +82,11 @@ export default async function AnalyticsPage() {
         </div>
 
         {/* Visual Funnel */}
+        {siteStats.page_views === 0 && (
+          <div className="empty-state" style={{ padding: 'var(--space-6)', background: 'var(--color-bg-alt)', borderRadius: 'var(--radius-md)' }}>
+            <p className="text-muted">No funnel data available for this selection.</p>
+          </div>
+        )}
         <div style={{ maxWidth: '600px' }}>
           {[
             { label: 'Page Views', value: siteStats.page_views, color: 'var(--color-info)' },
@@ -70,7 +96,7 @@ export default async function AnalyticsPage() {
           ].map((step, i) => {
             const maxVal = Math.max(siteStats.page_views, 1);
             const widthPercent = Math.max((step.value / maxVal) * 100, 2);
-            return (
+            return siteStats.page_views > 0 ? (
               <div key={i} style={{ marginBottom: 'var(--space-3)' }}>
                 <div className="flex justify-between mb-1">
                   <span className="text-sm font-semibold">{step.label}</span>
@@ -101,7 +127,7 @@ export default async function AnalyticsPage() {
                   />
                 </div>
               </div>
-            );
+            ) : null;
           })}
         </div>
       </div>

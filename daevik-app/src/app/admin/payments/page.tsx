@@ -47,6 +47,7 @@ export default function PaymentsPage() {
   const [saving, setSaving] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [formData, setFormData] = useState<Record<string, Record<string, string>>>({});
+  const [showSecrets, setShowSecrets] = useState<Record<string, boolean>>({});
 
   const fetchConfigs = useCallback(async () => {
     try {
@@ -79,7 +80,18 @@ export default function PaymentsPage() {
     setTimeout(() => setToast(null), 3000);
   };
 
+    const validateConfig = (provider: string) => {
+    const data = formData[provider];
+    if (!data) return false;
+    const info = gatewayInfo[provider];
+    return info.fields.every(f => !!data[f.key]?.trim());
+  };
+
   const handleSave = async (provider: string) => {
+    if (!validateConfig(provider)) {
+      showToast("Please fill all required fields", "error");
+      return;
+    }
     setSaving(provider);
     try {
       const res = await fetch(`/api/admin/gateways/${provider}`, {
@@ -101,6 +113,10 @@ export default function PaymentsPage() {
   };
 
   const toggleActive = async (provider: string, active: boolean) => {
+    if (active && !validateConfig(provider)) {
+      showToast("Please fill all fields and save before activating", "error");
+      return;
+    }
     try {
       const res = await fetch(`/api/admin/gateways/${provider}`, {
         method: 'PUT',
@@ -145,6 +161,9 @@ export default function PaymentsPage() {
                   <p className="text-sm text-muted">{info.description}</p>
                 </div>
                 <div className="flex items-center gap-3">
+                  <span className={`badge ${formData[config.provider]?.mode === 'live' ? 'badge-error' : 'badge-warning'}`}>
+                    {formData[config.provider]?.mode === 'live' ? 'LIVE MODE' : 'TEST MODE'}
+                  </span>
                   <span className={`badge ${config.active ? 'badge-success' : 'badge-neutral'}`}>
                     {config.active ? 'Active' : 'Inactive'}
                   </span>
@@ -165,7 +184,7 @@ export default function PaymentsPage() {
                       <input
                         className="form-input"
                         style={{ flex: 1 }}
-                        type={field.key === 'webhook_secret' ? 'text' : 'password'}
+                        type={field.key === 'webhook_secret' || showSecrets[config.provider +  field.key] ? 'text' : 'password'}
                         placeholder={field.placeholder}
                         value={formData[config.provider]?.[field.key] || ''}
                         onChange={(e) =>
@@ -178,6 +197,15 @@ export default function PaymentsPage() {
                           })
                         }
                       />
+                      {field.key !== 'webhook_secret' && (
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-sm"
+                          onClick={() => setShowSecrets(prev => ({ ...prev, [config.provider + field.key]: !prev[config.provider + field.key] }))}
+                        >
+                          {showSecrets[config.provider +  field.key] ? 'Hide' : 'Show'}
+                        </button>
+                      )}
                       {field.key === 'webhook_secret' && (
                         <button
                           type="button"

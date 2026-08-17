@@ -111,8 +111,9 @@ export default function SeoPage() {
                       onChange={(e) => setForms({ ...forms, [product.id]: { ...forms[product.id], seo_title: e.target.value } })}
                       placeholder={`${product.name} — Daevik`}
                     />
-                    <span className="form-hint">
+                    <span className={`form-hint ${(forms[product.id]?.seo_title || '').length > 60 ? 'text-error font-semibold' : ''}`}>
                       {(forms[product.id]?.seo_title || '').length}/60 characters
+                      {(forms[product.id]?.seo_title || '').length > 60 && ' (Warning: Title may be truncated in search results)'}
                     </span>
                   </div>
 
@@ -125,8 +126,9 @@ export default function SeoPage() {
                       placeholder="A compelling description for search results..."
                       rows={3}
                     />
-                    <span className="form-hint">
+                    <span className={`form-hint ${(forms[product.id]?.seo_description || '').length > 160 ? 'text-error font-semibold' : ''}`}>
                       {(forms[product.id]?.seo_description || '').length}/160 characters
+                      {(forms[product.id]?.seo_description || '').length > 160 && ' (Warning: Description may be truncated in search results)'}
                     </span>
                   </div>
 

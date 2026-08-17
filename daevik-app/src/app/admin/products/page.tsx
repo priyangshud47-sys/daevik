@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import ConfirmModal from '@/components/ConfirmModal';
 
 interface Product {
   id: string;
@@ -21,6 +22,7 @@ export default function ProductsPage() {
 
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // New product form state
   const [name, setName] = useState('');
@@ -269,9 +271,14 @@ export default function ProductsPage() {
                   <td className="font-semibold">₹{Number(product.price).toLocaleString('en-IN')}</td>
                   <td>
                     {product.product_file_url ? (
-                      <a href={`/api/admin/download?url=${encodeURIComponent(product.product_file_url)}`} target="_blank" rel="noopener noreferrer" className="badge badge-success" style={{ textDecoration: 'none' }}>
-                        View File
-                      </a>
+                      <div className="flex items-center gap-2">
+                        <span className="badge badge-success text-xs" style={{ textTransform: 'uppercase', fontSize: '0.65rem' }}>
+                          {product.product_file_url.split('.').pop()?.split('?')[0]?.substring(0, 4) || 'FILE'}
+                        </span>
+                        <a href={`/api/admin/download?url=${encodeURIComponent(product.product_file_url)}`} target="_blank" rel="noopener noreferrer" className="text-sm font-medium" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>
+                          View
+                        </a>
+                      </div>
                     ) : (
                       <span className="badge badge-neutral">No File</span>
                     )}
@@ -284,7 +291,7 @@ export default function ProductsPage() {
                       </button>
                       <button 
                         className="btn btn-ghost btn-sm" 
-                        onClick={() => setProductToDelete(product)}
+                        onClick={() => { setProductToDelete(product); setShowDeleteConfirm(true); }}
                         style={{ color: 'var(--color-danger)' }}
                       >
                         Delete
@@ -482,34 +489,19 @@ export default function ProductsPage() {
       )}
 
       {/* Delete Confirmation Modal */}
-      {productToDelete && (
-        <div className="modal-backdrop" style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 60 }}>
-          <div className="card" style={{ width: '100%', maxWidth: '400px', margin: '20px', textAlign: 'center' }}>
-            <h2 className="text-xl font-bold mb-2">Delete Product</h2>
-            <p className="text-secondary mb-6">Are you sure you want to delete <strong>{productToDelete.name}</strong>? This action cannot be undone.</p>
-            
-            <div className="flex justify-center gap-3">
-              <button 
-                type="button" 
-                className="btn btn-ghost" 
-                onClick={() => setProductToDelete(null)}
-                disabled={saving}
-              >
-                Cancel
-              </button>
-              <button 
-                type="button" 
-                className="btn btn-primary"
-                style={{ backgroundColor: 'var(--color-danger)', borderColor: 'var(--color-danger)' }}
-                onClick={handleDeleteProduct}
-                disabled={saving}
-              >
-                {saving ? 'Deleting...' : 'Yes, Delete'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={showDeleteConfirm}
+        title="Delete Product"
+        message={`Are you sure you want to delete "${productToDelete?.name}"? This action cannot be undone and the associated digital file will be permanently removed.`}
+        requireMatch="DELETE"
+        confirmText={saving ? "Deleting..." : "Yes, Delete"}
+        onConfirm={handleDeleteProduct}
+        onCancel={() => {
+          setProductToDelete(null);
+          setShowDeleteConfirm(false);
+        }}
+      />
     </div>
   );
 }

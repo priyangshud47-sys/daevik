@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import ConfirmModal from '@/components/ConfirmModal';
 
 interface FbConfig {
   id: string;
@@ -20,6 +21,7 @@ export default function FacebookPage() {
   const [form, setForm] = useState({ pixel_id: '', access_token: '', test_event_code: '' });
   
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
 
   const fetchConfigs = useCallback(async () => {
     try {
@@ -45,6 +47,16 @@ export default function FacebookPage() {
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!/^\d+$/.test(form.pixel_id.trim())) {
+      showToast('Pixel ID must contain only numbers', 'error');
+      return;
+    }
+    if (form.access_token.trim().length < 20) {
+      showToast('Access Token seems too short to be valid', 'error');
+      return;
+    }
+    
     setSaving(true);
     try {
       const res = await fetch('/api/admin/facebook', {
@@ -68,9 +80,25 @@ export default function FacebookPage() {
     }
   };
 
+  const toggleActive = async (id: string, currentStatus: boolean) => {
+    try {
+      const res = await fetch(`/api/admin/facebook`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, active: !currentStatus }),
+      });
+      if (res.ok) {
+        showToast('Status updated', 'success');
+        fetchConfigs();
+      } else {
+        throw new Error('Failed to update status');
+      }
+    } catch {
+      showToast('Failed to update status', 'error');
+    }
+  };
+
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this configuration?')) return;
-    
     try {
       const res = await fetch(`/api/admin/facebook?id=${id}`, {
         method: 'DELETE',
@@ -121,6 +149,7 @@ export default function FacebookPage() {
                 <th>Pixel ID</th>
                 <th>Access Token</th>
                 <th>Test Event Code</th>
+                <th>Status</th>
                 <th style={{ textAlign: 'right' }}>Actions</th>
               </tr>
             </thead>
@@ -142,10 +171,18 @@ export default function FacebookPage() {
                       <span className="text-sm text-muted">None</span>
                     )}
                   </td>
+                  <td>
+                    <button 
+                      className={`btn btn-sm ${c.active ? 'btn-success' : 'btn-secondary'}`} 
+                      onClick={() => toggleActive(c.id, c.active)}
+                    >
+                      {c.active ? 'Active' : 'Inactive'}
+                    </button>
+                  </td>
                   <td style={{ textAlign: 'right' }}>
                     <button 
                       className="btn btn-sm btn-ghost text-error" 
-                      onClick={() => handleDelete(c.id)}
+                      onClick={() => setItemToDelete(c.id)}
                     >
                       Delete
                     </button>
@@ -164,6 +201,19 @@ export default function FacebookPage() {
           </button>
         </div>
       )}
+
+      {/* Delete Confirmation */}
+      <ConfirmModal
+        isOpen={!!itemToDelete}
+        title="Delete Facebook Config"
+        message="Are you sure you want to delete this configuration? Tracking will stop immediately."
+        confirmText="Delete"
+        onConfirm={() => {
+          if (itemToDelete) handleDelete(itemToDelete);
+          setItemToDelete(null);
+        }}
+        onCancel={() => setItemToDelete(null)}
+      />
 
       {/* Add Modal */}
       {showAddModal && (

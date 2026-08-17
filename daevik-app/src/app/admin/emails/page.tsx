@@ -85,6 +85,12 @@ export default function EmailsPage() {
 
   const handleSave = async () => {
     if (!editing) return;
+    
+    if (!form.body.includes('{{download_link}}')) {
+      showToast('Template must include {{download_link}} placeholder', 'error');
+      return;
+    }
+    
     setSaving(true);
 
     try {
@@ -104,6 +110,28 @@ export default function EmailsPage() {
       showToast('Failed to save template', 'error');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const [testingSmtp, setTestingSmtp] = useState(false);
+  const handleTestSmtp = async () => {
+    setTestingSmtp(true);
+    try {
+      const res = await fetch('/api/admin/smtp/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(smtpForm),
+      });
+
+      if (res.ok) {
+        showToast('SMTP Connection Successful!', 'success');
+      } else {
+        throw new Error('Connection failed');
+      }
+    } catch {
+      showToast('SMTP Connection Failed. Check credentials.', 'error');
+    } finally {
+      setTestingSmtp(false);
     }
   };
 
@@ -361,9 +389,14 @@ export default function EmailsPage() {
                 </label>
               </div>
 
-              <button className="btn btn-secondary" style={{ marginTop: 'var(--space-2)' }} onClick={handleSaveSmtp} disabled={savingSmtp}>
-                {savingSmtp ? 'Saving...' : 'Save SMTP Settings'}
-              </button>
+              <div style={{ display: 'flex', gap: 'var(--space-3)', marginTop: 'var(--space-2)' }}>
+                <button className="btn btn-secondary" onClick={handleTestSmtp} disabled={testingSmtp}>
+                  {testingSmtp ? 'Testing...' : 'Test Connection'}
+                </button>
+                <button className="btn btn-primary" onClick={handleSaveSmtp} disabled={savingSmtp}>
+                {savingSmtp ? 'Saving...' : 'Save Settings'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
