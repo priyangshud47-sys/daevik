@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
-import { extractStoragePath } from '@/lib/utils'; // wait, I don't know if this exists
 
 export async function GET(
   request: NextRequest,
