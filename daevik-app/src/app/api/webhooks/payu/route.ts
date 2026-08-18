@@ -62,10 +62,13 @@ export async function POST(request: NextRequest) {
       );
 
       if (!isValid) {
+        // Only update to failed if not already completed (idempotency)
+      if (order.payment_status !== 'completed') {
         await supabase
           .from('orders')
           .update({ payment_status: 'failed', gateway_response: params })
           .eq('id', order.id);
+      }
 
         return NextResponse.redirect(new URL('/?error=payment_verification_failed', request.url));
       }

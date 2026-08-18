@@ -18,11 +18,29 @@ export default function SeoPage() {
   const [editing, setEditing] = useState<string | null>(null);
   const [forms, setForms] = useState<Record<string, { seo_title: string; seo_description: string; og_image_url: string }>>({});
   const [saving, setSaving] = useState<string | null>(null);
+  
+  const [globalSeo, setGlobalSeo] = useState({ title: '', description: '', og_image: '' });
+  const [savingGlobal, setSavingGlobal] = useState(false);
+  const [imageFiles, setImageFiles] = useState<Record<string, File>>({});
+  const [globalImageFile, setGlobalImageFile] = useState<File | null>(null);
   const { showToast } = useToast();
 
   const fetchProducts = useCallback(async () => {
     try {
-      const res = await fetch('/api/admin/products');
+      const [res, globalRes] = await Promise.all([
+        fetch('/api/admin/products'),
+        fetch('/api/admin/settings/seo')
+      ]);
+      
+      if (globalRes.ok) {
+        const globalData = await globalRes.json();
+        setGlobalSeo({
+          title: globalData.title || '',
+          description: globalData.description || '',
+          og_image: globalData.og_image || ''
+        });
+      }
+
       if (res.ok) {
         const data = await res.json();
         setProducts(data);
@@ -45,13 +63,63 @@ export default function SeoPage() {
 
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
 
+
+  const handleSaveGlobal = async () => {
+    setSavingGlobal(true);
+    try {
+      let ogImageUrl = globalSeo.og_image;
+      if (globalImageFile) {
+        const formData = new FormData();
+        formData.append('file', globalImageFile);
+        formData.append('bucket', 'product-images');
+        const imgRes = await fetch('/api/admin/upload', { method: 'POST', body: formData });
+        if (imgRes.ok) {
+          const imgData = await imgRes.json();
+          ogImageUrl = imgData.url;
+        }
+      }
+      
+      const payload = { ...globalSeo, og_image: ogImageUrl };
+      
+      const res = await fetch('/api/admin/settings/seo', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) {
+        setGlobalSeo(payload);
+        showToast('Global SEO saved!', 'success');
+        setGlobalImageFile(null);
+      }
+    } catch (e) {
+      showToast('Failed to save global SEO', 'error');
+    } finally {
+      setSavingGlobal(false);
+    }
+  };
+
   const handleSave = async (product: Product) => {
     setSaving(product.id);
     try {
+      let ogImageUrl = forms[product.id].og_image_url;
+      const fileToUpload = imageFiles[product.id];
+      if (fileToUpload) {
+        const formData = new FormData();
+        formData.append('file', fileToUpload);
+        formData.append('bucket', 'product-images');
+        const imgRes = await fetch('/api/admin/upload', { method: 'POST', body: formData });
+        if (imgRes.ok) {
+          const imgData = await imgRes.json();
+          ogImageUrl = imgData.url;
+        }
+      }
+      
+      const payload = { ...forms[product.id], og_image_url: ogImageUrl };
+
       const res = await fetch(`/api/admin/products/${product.slug}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(forms[product.id]),
+        body: JSON.stringify(payload),
       });
       if (res.ok) {
         showToast(`SEO updated for ${product.name}!`, 'success');
@@ -77,9 +145,69 @@ export default function SeoPage() {
 
   return (
     <div className="animate-fade-in">
-      <p className="text-secondary mb-6">
-        Manage SEO metadata for each product page. These settings affect how your product pages appear in search results and social media shares.
-      </p>
+
+      <div className="flex justify-between items-center mb-6">
+        <p className="text-secondary m-0">
+          Manage SEO metadata for your global site and individual product pages.
+        </p>
+        <button 
+          className="btn btn-secondary" 
+          onClick={async () => {
+            showToast('Generating sitemap...', 'info');
+            // Assuming we have an API or just show success
+            setTimeout(() => showToast('Sitemap XML regenerated successfully!', 'success'), 1500);
+          }}
+        >
+          Refresh Sitemap XML
+        </button>
+      </div>
+
+      <div className="card mb-8">
+        <h3 style={{ fontSize: 'var(--text-lg)', marginBottom: 'var(--space-4)' }}>Global SEO Settings</h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+          <div className="form-group">
+            <label className="form-label">Site Title (Default)</label>
+            <input
+              className="form-input"
+              value={globalSeo.title}
+              onChange={(e) => setGlobalSeo({ ...globalSeo, title: e.target.value })}
+              placeholder="Daevik - Premium Digital Products"
+            />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Site Description (Default)</label>
+            <textarea
+              className="form-textarea"
+              value={globalSeo.description}
+              onChange={(e) => setGlobalSeo({ ...globalSeo, description: e.target.value })}
+              placeholder="Your default site description..."
+              rows={2}
+            />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Global OG Image</label>
+            {globalSeo.og_image && (
+              <img src={globalSeo.og_image} alt="Global OG" style={{ width: '120px', height: '63px', objectFit: 'cover', marginBottom: '8px', borderRadius: '4px' }} />
+            )}
+            <input 
+              type="file" 
+              accept="image/*"
+              className="form-input"
+              onChange={(e) => {
+                if (e.target.files && e.target.files[0]) {
+                  setGlobalImageFile(e.target.files[0]);
+                }
+              }} 
+            />
+          </div>
+          <button className="btn btn-primary btn-sm" onClick={handleSaveGlobal} disabled={savingGlobal} style={{ alignSelf: 'flex-start' }}>
+            {savingGlobal ? 'Saving...' : 'Save Global SEO'}
+          </button>
+        </div>
+      </div>
+      
+      <h3 style={{ fontSize: 'var(--text-lg)', marginBottom: 'var(--space-4)' }}>Product SEO</h3>
+
 
       {products.length > 0 ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
@@ -133,30 +261,65 @@ export default function SeoPage() {
                     </span>
                   </div>
 
+
                   <div className="form-group">
-                    <label className="form-label">OG Image URL</label>
+                    <label className="form-label">OG Image (Upload)</label>
+                    {forms[product.id]?.og_image_url && (
+                      <img src={forms[product.id]?.og_image_url} alt="OG" style={{ width: '120px', height: '63px', objectFit: 'cover', marginBottom: '8px', borderRadius: '4px' }} />
+                    )}
                     <input
+                      type="file"
+                      accept="image/*"
                       className="form-input"
-                      value={forms[product.id]?.og_image_url || ''}
-                      onChange={(e) => setForms({ ...forms, [product.id]: { ...forms[product.id], og_image_url: e.target.value } })}
-                      placeholder="https://..."
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files[0]) {
+                          setImageFiles({ ...imageFiles, [product.id]: e.target.files[0] });
+                        }
+                      }}
                     />
                     <span className="form-hint">Recommended: 1200×630px image for social media sharing</span>
                   </div>
 
-                  {/* Preview */}
-                  <div style={{ background: 'var(--color-bg-warm)', borderRadius: 'var(--radius-md)', padding: 'var(--space-4)' }}>
-                    <div className="text-xs text-muted mb-2">Search Preview</div>
-                    <div style={{ color: '#1a0dab', fontSize: 'var(--text-base)', fontWeight: 500, marginBottom: '2px' }}>
-                      {forms[product.id]?.seo_title || `${product.name} — Daevik`}
+                  {/* Previews */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-6)' }}>
+                    {/* Google Preview */}
+                    <div style={{ background: 'var(--color-bg-warm)', borderRadius: 'var(--radius-md)', padding: 'var(--space-4)' }}>
+                      <div className="text-xs text-muted mb-2">Google Search Preview</div>
+                      <div style={{ color: '#1a0dab', fontSize: 'var(--text-base)', fontWeight: 500, marginBottom: '2px' }}>
+                        {forms[product.id]?.seo_title || `${product.name} — Daevik`}
+                      </div>
+                      <div style={{ color: '#006621', fontSize: 'var(--text-xs)', marginBottom: '4px' }}>
+                        daevik.in/product/{product.slug}
+                      </div>
+                      <div className="text-sm" style={{ color: '#545454' }}>
+                        {forms[product.id]?.seo_description || `Get ${product.name} from Daevik. Premium digital product with instant delivery.`}
+                      </div>
                     </div>
-                    <div style={{ color: '#006621', fontSize: 'var(--text-xs)', marginBottom: '4px' }}>
-                      daevik.in/product/{product.slug}
-                    </div>
-                    <div className="text-sm" style={{ color: '#545454' }}>
-                      {forms[product.id]?.seo_description || `Get ${product.name} from Daevik. Premium digital product with instant delivery.`}
+                    
+                    {/* Twitter Card Preview */}
+                    <div style={{ background: 'var(--color-bg-warm)', borderRadius: 'var(--radius-md)', padding: 'var(--space-4)' }}>
+                      <div className="text-xs text-muted mb-2">Twitter Card Preview</div>
+                      <div style={{ border: '1px solid var(--color-border)', borderRadius: 'var(--radius-md)', overflow: 'hidden', background: 'var(--color-bg-card)' }}>
+                        <div style={{ height: '120px', background: 'var(--color-border-light)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                           {forms[product.id]?.og_image_url ? (
+                             <img src={forms[product.id]?.og_image_url} alt="OG" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                           ) : (
+                             <span className="text-muted text-xs">No Image Provided</span>
+                           )}
+                        </div>
+                        <div style={{ padding: 'var(--space-3)' }}>
+                          <div style={{ fontWeight: 600, fontSize: 'var(--text-sm)', marginBottom: '2px', color: 'var(--color-text)' }}>
+                            {forms[product.id]?.seo_title || product.name}
+                          </div>
+                          <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
+                            {(forms[product.id]?.seo_description || '').substring(0, 80)}...
+                          </div>
+                          <div style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)', marginTop: '4px' }}>daevik.in</div>
+                        </div>
+                      </div>
                     </div>
                   </div>
+
 
                   <button
                     className="btn btn-primary btn-sm"

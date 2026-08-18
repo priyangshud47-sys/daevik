@@ -73,6 +73,7 @@ CREATE TABLE orders (
   currency TEXT NOT NULL DEFAULT 'INR',
   gateway_used TEXT NOT NULL CHECK (gateway_used IN ('razorpay', 'payu', 'paypal')),
   payment_status TEXT NOT NULL DEFAULT 'pending' CHECK (payment_status IN ('pending', 'completed', 'failed', 'refunded')),
+  download_count INTEGER DEFAULT 0,
   transaction_id TEXT,
   gateway_order_id TEXT,
   gateway_response JSONB DEFAULT '{}',
@@ -280,3 +281,15 @@ CREATE POLICY "Admin can manage SMTP configs"
     ON smtp_configs FOR ALL
     USING (false)
     WITH CHECK (false);
+
+-- ==============================================
+-- DOWNLOAD TRACKING
+-- ==============================================
+CREATE OR REPLACE FUNCTION increment_download_count(order_id UUID)
+RETURNS void AS $$
+BEGIN
+  UPDATE orders
+  SET download_count = COALESCE(download_count, 0) + 1
+  WHERE id = order_id;
+END;
+$$ LANGUAGE plpgsql;

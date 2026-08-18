@@ -15,25 +15,28 @@ interface Project {
   fb_access_token: string | null;
   status: string;
   created_at: string;
+  display_order?: number;
 }
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
+  const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
   
   // Old modal logic removed
   
   // Settings for the modal (removed)
   
   const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
 
   const fetchProjects = useCallback(async () => {
     try {
       const res = await fetch('/api/admin/products?type=project');
       if (res.ok) {
         const data = await res.json();
+        data.sort((a: any, b: any) => (a.display_order || 0) - (b.display_order || 0));
         setProjects(data);
       }
     } catch (err) {
@@ -45,7 +48,7 @@ export default function ProjectsPage() {
 
   useEffect(() => { fetchProjects(); }, [fetchProjects]);
 
-  const showToast = (message: string, type: 'success' | 'error') => {
+  const showToast = (message: string, type: 'success' | 'error' | 'info') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
   };
@@ -68,6 +71,61 @@ export default function ProjectsPage() {
   };
 
   // handleSaveConfig removed
+
+
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedIdx(index);
+    e.dataTransfer.effectAllowed = 'move';
+    // Small delay to allow the drag ghost to generate before changing opacity
+    setTimeout(() => {
+      const el = document.getElementById(`project-row-${index}`);
+      if (el) el.style.opacity = '0.5';
+    }, 0);
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = async (e: React.DragEvent, dropIdx: number) => {
+    e.preventDefault();
+    if (draggedIdx === null || draggedIdx === dropIdx) return;
+    
+    const el = document.getElementById(`project-row-${draggedIdx}`);
+    if (el) el.style.opacity = '1';
+
+    const newProjects = [...projects];
+    const draggedItem = newProjects.splice(draggedIdx, 1)[0];
+    newProjects.splice(dropIdx, 0, draggedItem);
+    setProjects(newProjects);
+    setDraggedIdx(null);
+
+    // Save order
+    try {
+      showToast('Saving order...', 'info');
+      // Update one by one or create a bulk API. We'll just update sequentially for now
+      for (let i = 0; i < newProjects.length; i++) {
+         if (newProjects[i].display_order !== i) {
+           newProjects[i].display_order = i;
+           await fetch(`/api/admin/products/${newProjects[i].slug}`, {
+             method: 'PUT',
+             headers: { 'Content-Type': 'application/json' },
+             body: JSON.stringify({ display_order: i })
+           });
+         }
+      }
+      showToast('Order saved!', 'success');
+    } catch (err) {
+      showToast('Failed to save order', 'error');
+    }
+  };
+  
+  const handleDragEnd = (e: React.DragEvent, index: number) => {
+    setDraggedIdx(null);
+    const el = document.getElementById(`project-row-${index}`);
+    if (el) el.style.opacity = '1';
+  };
 
   const toggleStatus = async (project: Project) => {
     const newStatus = project.status === 'live' ? 'draft' : 'live';
@@ -148,10 +206,29 @@ export default function ProjectsPage() {
               </tr>
             </thead>
             <tbody>
-              {projects.map((project) => (
-                <tr key={project.id}>
+              {projects.map((project, index) => (
+                <tr 
+                  key={project.id}
+                  id={`project-row-${index}`}
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, index)}
+                  onDragOver={(e) => handleDragOver(e, index)}
+                  onDrop={(e) => handleDrop(e, index)}
+                  onDragEnd={(e) => handleDragEnd(e, index)}
+                  style={{ cursor: 'move', transition: 'all 0.2s ease' }}
+                >
                   <td>
                     <div className="flex items-center gap-3">
+                      <div style={{ cursor: 'grab', padding: '0 8px', color: 'var(--color-text-muted)' }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                           <line x1="8" y1="6" x2="21" y2="6"></line>
+                           <line x1="8" y1="12" x2="21" y2="12"></line>
+                           <line x1="8" y1="18" x2="21" y2="18"></line>
+                           <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                           <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                           <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                        </svg>
+                      </div>
                       <div style={{
                         width: '40px', height: '40px', borderRadius: 'var(--radius-md)',
                         background: 'var(--color-bg-warm)', flexShrink: 0, overflow: 'hidden',

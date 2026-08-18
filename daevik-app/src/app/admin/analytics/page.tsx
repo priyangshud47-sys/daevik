@@ -12,7 +12,7 @@ interface Product {
 
 interface ProductFunnel {
   product: Product;
-  stats: { page_views: number; checkout_starts: number; purchases: number; abandoned: number };
+  stats: { page_views: number; checkout_starts: number; purchases: number; abandoned: number; traffic_sources: { source: string, count: number }[] };
 }
 
 export default async function AnalyticsPage({ searchParams }: { searchParams: Promise<{ product?: string }> }) {
@@ -36,10 +36,33 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
   // Site-wide funnel
   const siteStats = productFilter !== 'all' ? await getFunnelStats(productFilter) : await getFunnelStats();
 
+  // Live Visitors (last 15 minutes)
+  const fifteenMinsAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+  let liveQuery = supabase.from('funnel_events').select('session_id').gte('created_at', fifteenMinsAgo);
+  if (productFilter !== 'all') {
+    liveQuery = liveQuery.eq('product_id', productFilter);
+  }
+  const { data: liveEvents } = await liveQuery;
+  const uniqueLiveVisitors = new Set(liveEvents?.map(e => e.session_id)).size;
+
   return (
     <div className="animate-fade-in">
       <div className="flex justify-between items-center mb-6">
-        <h2 style={{ fontSize: 'var(--text-xl)' }}>Funnel Analytics</h2>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
+          <h2 style={{ fontSize: 'var(--text-xl)' }}>Funnel Analytics</h2>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '6px',
+            padding: '4px 12px', borderRadius: 'var(--radius-full)',
+            background: 'var(--color-bg-warm)', fontSize: 'var(--text-xs)', fontWeight: 600
+          }}>
+            <span style={{ 
+              width: '8px', height: '8px', borderRadius: '50%', 
+              background: 'var(--color-success)', 
+              animation: 'pulse 2s infinite' 
+            }} />
+            {uniqueLiveVisitors} Live Visitors
+          </div>
+        </div>
         <div>
           <ProductFilter products={products} defaultValue={productFilter} />
         </div>
@@ -118,6 +141,51 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
             ) : null;
           })}
         </div>
+      </div>
+
+      {/* Traffic Sources */}
+      <div className="card mb-8">
+        <h3 style={{ fontSize: 'var(--text-lg)', marginBottom: 'var(--space-6)' }}>
+          Traffic Sources
+        </h3>
+        
+        {siteStats.traffic_sources.length > 0 ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)', maxWidth: '600px' }}>
+            {siteStats.traffic_sources.map(source => {
+              const maxVal = siteStats.traffic_sources[0].count;
+              const widthPercent = (source.count / maxVal) * 100;
+              return (
+                <div key={source.source}>
+                  <div className="flex justify-between mb-1">
+                    <span className="text-sm font-semibold capitalize">{source.source}</span>
+                    <span className="text-sm font-semibold">
+                      {source.count} <span className="text-xs text-muted font-normal">({((source.count / siteStats.page_views) * 100).toFixed(1)}%)</span>
+                    </span>
+                  </div>
+                  <div style={{
+                    height: '8px',
+                    background: 'var(--color-bg-warm)',
+                    borderRadius: 'var(--radius-sm)',
+                    overflow: 'hidden',
+                  }}>
+                    <div
+                      style={{
+                        height: '100%',
+                        width: `${widthPercent}%`,
+                        background: 'var(--color-primary)',
+                        borderRadius: 'var(--radius-sm)',
+                      }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="empty-state" style={{ padding: 'var(--space-6)', background: 'var(--color-bg-alt)', borderRadius: 'var(--radius-md)' }}>
+            <p className="text-muted">No traffic data available.</p>
+          </div>
+        )}
       </div>
 
       {/* Per-Product Funnels */}

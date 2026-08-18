@@ -12,6 +12,7 @@ interface FbConfig {
   test_event_code: string | null;
   active: boolean;
   updated_at: string;
+  last_event_at?: string;
 }
 
 export default function FacebookPage() {
@@ -20,17 +21,28 @@ export default function FacebookPage() {
   const [saving, setSaving] = useState(false);
   
   const [showAddModal, setShowAddModal] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ pixel_id: '', access_token: '', test_event_code: '' });
+  const [ga4Id, setGa4Id] = useState('');
+  const [savingGa4, setSavingGa4] = useState(false);
   
   const { showToast } = useToast();
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
 
   const fetchConfigs = useCallback(async () => {
     try {
-      const res = await fetch('/api/admin/facebook');
+      const [res, gaRes] = await Promise.all([
+        fetch('/api/admin/facebook'),
+        fetch('/api/admin/settings/google')
+      ]);
+      
       if (res.ok) {
         const data = await res.json();
         setConfigs(Array.isArray(data) ? data : []);
+      }
+      if (gaRes.ok) {
+        const gaData = await gaRes.json();
+        if (gaData?.ga4_id) setGa4Id(gaData.ga4_id);
       }
     } catch (err) {
       console.error('Failed to fetch Facebook configs:', err);
@@ -42,9 +54,28 @@ export default function FacebookPage() {
 
   useEffect(() => { fetchConfigs(); }, [fetchConfigs]);
 
-  const handleAdd = async (e: React.FormEvent) => {
+
+  const handleSaveGa4 = async () => {
+    setSavingGa4(true);
+    try {
+      const res = await fetch('/api/admin/settings/google', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ga4_id: ga4Id })
+      });
+      if (res.ok) {
+        showToast('GA4 settings saved', 'success');
+      }
+    } catch (e) {
+      showToast('Failed to save GA4', 'error');
+    } finally {
+      setSavingGa4(false);
+    }
+  };
+
+
+  const submitForm = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!/^\d+$/.test(form.pixel_id.trim())) {
       showToast('Pixel ID must contain only numbers', 'error');
       return;
@@ -56,14 +87,18 @@ export default function FacebookPage() {
     
     setSaving(true);
     try {
+      const method = editingId ? 'PUT' : 'POST';
+      const body = editingId ? { id: editingId, ...form } : form;
+      
       const res = await fetch('/api/admin/facebook', {
-        method: 'POST',
+        method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify(body),
       });
       if (res.ok) {
-        showToast('Facebook CAPI added!', 'success');
+        showToast(`Facebook CAPI ${editingId ? 'updated' : 'added'}!`, 'success');
         setShowAddModal(false);
+        setEditingId(null);
         setForm({ pixel_id: '', access_token: '', test_event_code: '' });
         fetchConfigs();
       } else {
@@ -71,11 +106,14 @@ export default function FacebookPage() {
         throw new Error(err.error || 'Failed to save');
       }
     } catch (err) {
-      showToast(err instanceof Error ? err.message : 'Failed to add', 'error');
+      showToast(err instanceof Error ? err.message : 'Failed to save', 'error');
     } finally {
       setSaving(false);
     }
   };
+
+  const handleAdd = submitForm;
+
 
   const toggleActive = async (id: string, currentStatus: boolean) => {
     try {
@@ -92,6 +130,20 @@ export default function FacebookPage() {
       }
     } catch {
       showToast('Failed to update status', 'error');
+    }
+  };
+
+
+  const handleSendTestEvent = async (id: string) => {
+    try {
+      const res = await fetch(`/api/admin/facebook/test?id=${id}`, { method: 'POST' });
+      if (res.ok) {
+        showToast('Test event sent successfully!', 'success');
+      } else {
+        showToast('Failed to send test event', 'error');
+      }
+    } catch (e) {
+      showToast('Error sending test event', 'error');
     }
   };
 
@@ -122,7 +174,7 @@ export default function FacebookPage() {
           <h1 style={{ fontSize: 'var(--text-xl)', marginBottom: 'var(--space-1)' }}>Facebook CAPI</h1>
           <p className="text-secondary">Manage your Facebook Pixel and Conversions API connections</p>
         </div>
-        <button className="btn btn-primary" onClick={() => setShowAddModal(true)}>
+        <button className="btn btn-primary" onClick={() => { setEditingId(null); setForm({ pixel_id: '', access_token: '', test_event_code: '' }); setShowAddModal(true); }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '8px' }}>
             <line x1="12" y1="5" x2="12" y2="19"></line>
             <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -132,6 +184,26 @@ export default function FacebookPage() {
       </div>
 
       
+
+
+      <div className="card mb-8">
+        <h3 className="text-lg font-bold mb-4">Google Analytics 4</h3>
+        <div className="form-group" style={{ maxWidth: '400px' }}>
+          <label className="form-label">Measurement ID (e.g. G-XXXXXXXXXX)</label>
+          <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+            <input 
+              type="text" 
+              className="form-input" 
+              value={ga4Id} 
+              onChange={e => setGa4Id(e.target.value)} 
+              placeholder="G-" 
+            />
+            <button className="btn btn-primary" onClick={handleSaveGa4} disabled={savingGa4}>
+              {savingGa4 ? 'Saving...' : 'Save GA4'}
+            </button>
+          </div>
+        </div>
+      </div>
 
       {/* List of Pixels */}
       {configs.length > 0 ? (
@@ -143,6 +215,7 @@ export default function FacebookPage() {
                 <th>Access Token</th>
                 <th>Test Event Code</th>
                 <th>Status</th>
+                <th>Last Event</th>
                 <th style={{ textAlign: 'right' }}>Actions</th>
               </tr>
             </thead>
@@ -167,7 +240,28 @@ export default function FacebookPage() {
                   <td>
                     <ToggleSwitch checked={c.active} onChange={() => toggleActive(c.id, c.active)} />
                   </td>
-                  <td style={{ textAlign: 'right' }}>
+                  <td>
+                    <span className="text-xs text-muted">
+                      {c.last_event_at ? new Date(c.last_event_at).toLocaleString() : 'Never'}
+                    </span>
+                  </td>
+                  <td style={{ textAlign: 'right', display: 'flex', gap: 'var(--space-2)', justifyContent: 'flex-end' }}>
+                    <button 
+                      className="btn btn-sm btn-ghost text-success"
+                      onClick={() => handleSendTestEvent(c.id)}
+                    >
+                      Test Event
+                    </button>
+                    <button 
+                      className="btn btn-sm btn-ghost" 
+                      onClick={() => {
+                        setEditingId(c.id);
+                        setForm({ pixel_id: c.pixel_id || '', access_token: c.access_token || '', test_event_code: c.test_event_code || '' });
+                        setShowAddModal(true);
+                      }}
+                    >
+                      Edit
+                    </button>
                     <button 
                       className="btn btn-sm btn-ghost text-error" 
                       onClick={() => setItemToDelete(c.id)}
@@ -207,7 +301,7 @@ export default function FacebookPage() {
       {showAddModal && (
         <div className="modal-backdrop" style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
           <div className="card" style={{ width: '100%', maxWidth: '500px', margin: '20px' }}>
-            <h2 className="text-xl font-bold mb-2">Add Facebook Pixel</h2>
+            <h2 className="text-xl font-bold mb-2">{editingId ? 'Edit Facebook Pixel' : 'Add Facebook Pixel'}</h2>
             <p className="text-secondary mb-6">Enter your Facebook tracking credentials.</p>
             
             <form onSubmit={handleAdd} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -253,7 +347,7 @@ export default function FacebookPage() {
                   Cancel
                 </button>
                 <button type="submit" className="btn btn-primary" disabled={saving}>
-                  {saving ? 'Saving...' : 'Save Pixel'}
+                  {saving ? 'Saving...' : (editingId ? 'Update Pixel' : 'Save Pixel')}
                 </button>
               </div>
             </form>

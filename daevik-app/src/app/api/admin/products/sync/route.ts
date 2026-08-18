@@ -50,14 +50,7 @@ export async function POST() {
         }
       }
 
-      const readHtml = (filename: string) => {
-        const filePath = path.join(productPath, filename);
-        return fs.existsSync(filePath) ? fs.readFileSync(filePath, 'utf-8') : null;
-      };
-
-      const landing_page_html = readHtml('sales.html');
-      const checkout_page_html = readHtml('checkout.html');
-      const thank_you_page_html = readHtml('thankyou.html');
+      
 
       const productData = {
         name: config.name || slug,
@@ -73,9 +66,9 @@ export async function POST() {
         seo_description: config.seo_description || null,
         og_image_url: config.og_image_url || null,
         fb_pixel_id: config.fb_pixel_id || null,
-        landing_page_html,
-        checkout_page_html,
-        thank_you_page_html,
+        
+        
+        
       };
 
       // Upsert based on slug

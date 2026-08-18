@@ -63,13 +63,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    // Get public URL
-    const { data: { publicUrl } } = supabase
-      .storage
-      .from('product-files')
-      .getPublicUrl(filePath);
-
-    return NextResponse.json({ url: publicUrl }, { status: 200 });
+    // Return internal storage path instead of public URL for privacy
+    return NextResponse.json({ url: `product-files/${filePath}` }, { status: 200 });
 
   } catch (error) {
     console.error('File Upload Error:', error);

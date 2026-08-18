@@ -7,8 +7,8 @@ import { useEffect, useState } from 'react';
 // Declare fbq for TypeScript
 declare global {
   interface Window {
-    fbq: any;
-    _fbq: any;
+    fbq: (...args: unknown[]) => void;
+    _fbq: unknown;
   }
 }
 

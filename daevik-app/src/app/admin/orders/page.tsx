@@ -11,7 +11,9 @@ interface OrderWithDetails {
   payment_status: string;
   transaction_id: string | null;
   created_at: string;
-  product: { name: string; slug: string } | null;
+  admin_note?: string;
+  product_id: string;
+  product: { id: string; name: string; slug: string } | null;
   customer: { name: string; email: string; phone: string | null } | null;
 }
 
@@ -37,22 +39,55 @@ export default function OrdersPage() {
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
   const [selectedOrder, setSelectedOrder] = useState<OrderWithDetails | null>(null);
+  const [page, setPage] = useState(1);
+  const [totalOrders, setTotalOrders] = useState(0);
+  const limit = 50;
+  const [products, setProducts] = useState<{id: string, name: string}[]>([]);
+  const [selectedProductId, setSelectedProductId] = useState('');
+  const [adminNote, setAdminNote] = useState('');
+  const [updatingOrder, setUpdatingOrder] = useState(false);
 
   const fetchOrders = useCallback(async () => {
+    setLoading(true);
     try {
-      const res = await fetch('/api/admin/orders');
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+      });
+      if (statusFilter !== 'all') params.set('status', statusFilter);
+      if (selectedProductId) params.set('product_id', selectedProductId);
+      if (startDate) params.set('startDate', startDate);
+      if (endDate) params.set('endDate', endDate + 'T23:59:59');
+
+      const res = await fetch(`/api/admin/orders?${params.toString()}`);
       if (res.ok) {
         const data = await res.json();
-        setOrders(data);
+        setOrders(data.orders || []);
+        setTotalOrders(data.total || 0);
       }
     } catch (err) {
       console.error('Failed to fetch orders:', err);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [page, limit, statusFilter, selectedProductId, startDate, endDate]);
 
-  useEffect(() => { fetchOrders(); }, [fetchOrders]);
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
+  
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const res = await fetch('/api/admin/products');
+        if (res.ok) {
+          const data = await res.json();
+          setProducts(data.map((p: any) => ({id: p.id, name: p.name})));
+        }
+      } catch (err) {}
+    };
+    fetchProducts();
+  }, []);
 
   const filteredOrders = orders.filter((order) => {
     const matchesSearch =
@@ -62,11 +97,7 @@ export default function OrdersPage() {
       order.product?.name.toLowerCase().includes(search.toLowerCase()) ||
       order.transaction_id?.toLowerCase().includes(search.toLowerCase());
 
-    const matchesStatus = statusFilter === 'all' || order.payment_status === statusFilter;
-    const matchesStartDate = !startDate || new Date(order.created_at) >= new Date(startDate);
-    const matchesEndDate = !endDate || new Date(order.created_at) <= new Date(endDate + 'T23:59:59');
-
-    return matchesSearch && matchesStatus && matchesStartDate && matchesEndDate;
+    return matchesSearch;
   });
 
   // Build unique customers
@@ -170,11 +201,17 @@ export default function OrdersPage() {
   };
 
   // Stats
-  const totalOrders = orders.length;
+  // totalOrders is managed by state for pagination
   const completedOrders = orders.filter(o => o.payment_status === 'completed');
   const pendingOrders = orders.filter(o => o.payment_status === 'pending');
   const failedOrders = orders.filter(o => o.payment_status === 'failed');
   const totalRevenue = completedOrders.reduce((s, o) => s + Number(o.amount), 0);
+  
+  const gatewayBreakdown = completedOrders.reduce((acc, o) => {
+    const gw = o.gateway_used || 'Unknown';
+    acc[gw] = (acc[gw] || 0) + Number(o.amount);
+    return acc;
+  }, {} as Record<string, number>);
 
   if (loading) {
     return (
@@ -224,6 +261,25 @@ export default function OrdersPage() {
         <div className="stat-card">
           <div className="stat-card-label">Unique Customers</div>
           <div className="stat-card-value">{uniqueCustomers.length}</div>
+        </div>
+      </div>
+      
+      <div className="card" style={{ marginBottom: 'var(--space-8)' }}>
+        <h3 style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', marginBottom: 'var(--space-4)' }}>Revenue by Gateway</h3>
+        <div style={{ display: 'flex', gap: 'var(--space-6)', flexWrap: 'wrap' }}>
+          {Object.entries(gatewayBreakdown).map(([gw, rev]) => (
+            <div key={gw} style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+              <span style={{ 
+                width: '12px', height: '12px', borderRadius: '50%', 
+                background: gw === 'razorpay' ? '#3385ff' : gw === 'payu' ? '#00b14f' : gw === 'paypal' ? '#003087' : 'var(--color-secondary)' 
+              }}></span>
+              <span style={{ textTransform: 'capitalize', fontWeight: 600, fontSize: 'var(--text-sm)' }}>{gw}:</span>
+              <span style={{ fontSize: 'var(--text-sm)' }}>₹{rev.toLocaleString('en-IN')}</span>
+            </div>
+          ))}
+          {Object.keys(gatewayBreakdown).length === 0 && (
+            <span style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>No completed orders in this view.</span>
+          )}
         </div>
       </div>
 
@@ -335,6 +391,17 @@ export default function OrdersPage() {
               </div>
 
 {/* Date Range Filter */}
+              <select 
+                className="form-input" 
+                value={selectedProductId}
+                onChange={(e) => setSelectedProductId(e.target.value)}
+                style={{ padding: '6px 12px', fontSize: 'var(--text-xs)', maxWidth: '150px' }}
+              >
+                <option value="">All Products</option>
+                {products.map(p => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
               <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
                 <input
                   type="date"
@@ -413,7 +480,7 @@ export default function OrdersPage() {
                 </thead>
                 <tbody>
                   {filteredOrders.map((order) => (
-                    <tr key={order.id} onClick={() => setSelectedOrder(order)} style={{ cursor: "pointer" }}>
+                    <tr key={order.id} onClick={() => { setSelectedOrder(order); setAdminNote(order.admin_note || ''); }} style={{ cursor: "pointer" }}>
                       <td>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
                           <div style={{
@@ -602,8 +669,27 @@ export default function OrdersPage() {
             padding: 'var(--space-3) 0',
           }}>
             <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-              Showing {filteredOrders.length} of {orders.length} orders
+              Showing {filteredOrders.length} of {totalOrders} orders
             </span>
+            <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+              <button 
+                className="btn btn-sm btn-ghost" 
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1}
+              >
+                Previous
+              </button>
+              <span style={{ fontSize: 'var(--text-sm)', display: 'flex', alignItems: 'center' }}>
+                Page {page} of {Math.ceil(totalOrders / limit) || 1}
+              </span>
+              <button 
+                className="btn btn-sm btn-ghost" 
+                onClick={() => setPage(p => p + 1)}
+                disabled={page >= Math.ceil(totalOrders / limit)}
+              >
+                Next
+              </button>
+            </div>
           </div>
         </>
       )}
@@ -798,7 +884,7 @@ export default function OrdersPage() {
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
           backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000,
           display: 'flex', justifyContent: 'flex-end'
-        }} onClick={() => setSelectedOrder(null)}>
+        }} onClick={() => { setSelectedOrder(null); setAdminNote(''); }}>
           <div 
             className="animate-slide-left"
             style={{
@@ -812,6 +898,34 @@ export default function OrdersPage() {
               <h2 style={{ fontSize: 'var(--text-xl)' }}>Order Details</h2>
               <button className="btn btn-secondary btn-sm" onClick={() => setSelectedOrder(null)}>Close</button>
             </div>
+            
+            {selectedOrder.payment_status === 'completed' && (
+               <div style={{ marginBottom: 'var(--space-4)', display: 'flex', gap: 'var(--space-2)' }}>
+                 <button
+                   className="btn btn-sm btn-secondary text-red-500"
+                   onClick={async () => {
+                     if (!confirm('Are you sure you want to mark this order as refunded?')) return;
+                     setUpdatingOrder(true);
+                     try {
+                       const res = await fetch(`/api/admin/orders/${selectedOrder.id}`, {
+                         method: 'PUT',
+                         headers: { 'Content-Type': 'application/json' },
+                         body: JSON.stringify({ payment_status: 'refunded' })
+                       });
+                       if (res.ok) {
+                         showToast('Order refunded', 'success');
+                         fetchOrders();
+                         setSelectedOrder(null);
+                       }
+                     } catch (e) {} finally { setUpdatingOrder(false); }
+                   }}
+                   disabled={updatingOrder}
+                 >
+                   Refund Order
+                 </button>
+               </div>
+            )}
+
             
             <div style={{ marginBottom: 'var(--space-6)' }}>
               <h3 style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', marginBottom: 'var(--space-2)' }}>Customer</h3>
@@ -841,6 +955,38 @@ export default function OrdersPage() {
               <p><strong>Transaction ID:</strong> {selectedOrder.transaction_id || 'N/A'}</p>
               <p><strong>Date:</strong> {new Date(selectedOrder.created_at).toLocaleString()}</p>
             </div>
+            
+            <div style={{ marginBottom: 'var(--space-6)' }}>
+              <h3 style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', marginBottom: 'var(--space-2)' }}>Admin Note</h3>
+              <textarea
+                className="form-input"
+                style={{ width: '100%', minHeight: '80px', padding: '10px' }}
+                value={adminNote !== '' ? adminNote : (selectedOrder.admin_note || '')}
+                onChange={(e) => setAdminNote(e.target.value)}
+                placeholder="Add private note about this order..."
+              />
+              <button
+                className="btn btn-sm btn-primary mt-2"
+                onClick={async () => {
+                  setUpdatingOrder(true);
+                  try {
+                    const res = await fetch(`/api/admin/orders/${selectedOrder.id}`, {
+                      method: 'PUT',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ admin_note: adminNote })
+                    });
+                    if (res.ok) {
+                      showToast('Note saved', 'success');
+                      fetchOrders();
+                    }
+                  } catch (e) {} finally { setUpdatingOrder(false); }
+                }}
+                disabled={updatingOrder}
+              >
+                Save Note
+              </button>
+            </div>
+
 
             <div style={{ display: 'flex', gap: 'var(--space-3)', marginTop: 'var(--space-8)' }}>
               <button 
@@ -851,10 +997,11 @@ export default function OrdersPage() {
                     if (res.ok) {
                       showToast('Delivery email resent successfully!', 'success');
                     } else {
-                      showToast('Failed to resend email', 'error');
+                      const data = await res.json().catch(() => ({}));
+                      showToast(data.error || 'Failed to resend email', 'error');
                     }
-                  } catch (e) {
-                    showToast('Failed to resend email', 'error');
+                  } catch (e: any) {
+                    showToast(e?.message || 'Failed to resend email', 'error');
                   }
                   
                 }}

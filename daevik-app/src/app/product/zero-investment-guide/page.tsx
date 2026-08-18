@@ -110,24 +110,24 @@ export default function ZeroInvestmentGuidePage() {
             <div className="problem-cards">
               <div className="problem-card">
                 <div className="problem-icon"><XCircle /></div>
-                <p>“I don't have money to invest.”</p>
+                <p>“I don&apos;t have money to invest.”</p>
               </div>
               <div className="problem-card">
                 <div className="problem-icon"><XCircle /></div>
-                <p>“I don't know how to code.”</p>
+                <p>“I don&apos;t know how to code.”</p>
               </div>
               <div className="problem-card">
                 <div className="problem-icon"><XCircle /></div>
-                <p>“I don't know what skill to sell.”</p>
+                <p>“I don&apos;t know what skill to sell.”</p>
               </div>
               <div className="problem-card">
                 <div className="problem-icon"><XCircle /></div>
-                <p>“I don't know how to find my first customer.”</p>
+                <p>“I don&apos;t know how to find my first customer.”</p>
               </div>
             </div>
             
             <div className="problem-transition">
-              <h3>You don't need to solve everything at once.</h3>
+              <h3>You don&apos;t need to solve everything at once.</h3>
               <p>Start with one useful skill, one simple offer, and one real customer.</p>
             </div>
           </div>
@@ -334,7 +334,7 @@ export default function ZeroInvestmentGuidePage() {
               No overnight-income promises. No fake screenshots. No guaranteed earnings. No expensive investment required.
             </h3>
             <p className="different-sub text-center">
-              This is a practical beginner's roadmap for learning a useful skill, creating a simple offer, finding potential customers, and taking consistent action.
+              This is a practical beginner&apos;s roadmap for learning a useful skill, creating a simple offer, finding potential customers, and taking consistent action.
             </p>
             
             <div className="credibility-grid">
@@ -362,7 +362,7 @@ export default function ZeroInvestmentGuidePage() {
         <section className="preview section-light">
           <div className="container">
             <h2 className="section-title text-center">Inside The Book</h2>
-            <p className="text-center mb-10 text-lg">See exactly what you're getting before you buy.</p>
+            <p className="text-center mb-10 text-lg">See exactly what you&apos;re getting before you buy.</p>
             
             <div className="preview-grid">
               <div className="preview-page group">
@@ -426,10 +426,10 @@ export default function ZeroInvestmentGuidePage() {
                 <li><span className="x">❌</span> You want guaranteed money overnight.</li>
                 <li><span className="x">❌</span> You refuse to learn or practice a skill.</li>
                 <li><span className="x">❌</span> You expect AI to do everything for you.</li>
-                <li><span className="x">❌</span> You don't want to contact potential customers.</li>
+                <li><span className="x">❌</span> You don&apos;t want to contact potential customers.</li>
               </ul>
               <p className="text-center mt-6 text-lg font-medium highlight-emerald">
-                But if you're willing to learn, test, improve and take action — this guide was built for you.
+                But if you&apos;re willing to learn, test, improve and take action — this guide was built for you.
               </p>
             </div>
           </div>
@@ -460,7 +460,7 @@ export default function ZeroInvestmentGuidePage() {
                 },
                 {
                   q: "How do I receive the ebook?",
-                  a: "After successful payment, you'll receive access according to the delivery process configured for the checkout (typically instant email delivery)."
+                  a: "After successful payment, you&apos;ll receive access according to the delivery process configured for the checkout (typically instant email delivery)."
                 },
                 {
                   q: "Is this suitable for beginners?",
@@ -489,7 +489,7 @@ export default function ZeroInvestmentGuidePage() {
         <section className="final-sales">
           <div className="container text-center">
             <h2 className="hero-headline mb-4">Your First ₹10,000 Starts With Your First Action.</h2>
-            <p className="hero-subheadline mb-8">You don't need to know everything today. You just need a practical starting point.</p>
+            <p className="hero-subheadline mb-8">You don&apos;t need to know everything today. You just need a practical starting point.</p>
             
             <div className="final-price-box">
               <div className="price text-6xl font-bold highlight-gold">₹149</div>

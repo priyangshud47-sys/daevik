@@ -6,19 +6,30 @@ import { supabase } from '@/lib/supabase';
 import { hideProductUrls } from '@/lib/utils';
 import { z } from 'zod';
 
+/*
+-- MIGRATION REQUIRED
+ALTER TABLE products 
+  ADD COLUMN image_url TEXT,
+  ADD COLUMN display_order INTEGER DEFAULT 0,
+  ADD COLUMN tags TEXT[];
+*/
+
 const productSchema = z.object({
   name: z.string().min(1).max(255),
   slug: z.string().regex(/^[a-z0-9-]+$/).min(1).max(255),
   price: z.number().min(0),
   description: z.string().nullable().optional(),
   tag: z.string().nullable().optional(),
+  tags: z.array(z.string()).nullable().optional(),
   thumbnail_url: z.string().url().nullable().optional(),
+  image_url: z.string().url().nullable().optional(),
   product_file_url: z.string().nullable().optional(),
   gateway_provider: z.enum(['razorpay', 'payu', 'paypal']).default('razorpay'),
   seo_title: z.string().nullable().optional(),
   seo_description: z.string().nullable().optional(),
   og_image_url: z.string().url().nullable().optional(),
   status: z.enum(['live', 'draft', 'archived']).default('draft'),
+  display_order: z.number().int().optional(),
 });
 
 
@@ -46,8 +57,28 @@ export async function GET(request: NextRequest) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+  
+  // Fetch sales count for each product
+  const { data: orderCounts, error: orderError } = await supabase
+    .from('orders')
+    .select('product_id, amount')
+    .eq('payment_status', 'completed');
+    
+  const salesMap = new Map<string, number>();
+  if (orderCounts) {
+    orderCounts.forEach(o => {
+      if (o.product_id) {
+        salesMap.set(o.product_id, (salesMap.get(o.product_id) || 0) + 1);
+      }
+    });
+  }
 
-  return NextResponse.json((data || []).map(p => hideProductUrls(p)));
+  const productsWithSales = (data || []).map(p => ({
+    ...hideProductUrls(p),
+    sales_count: salesMap.get(p.id) || 0
+  }));
+
+  return NextResponse.json(productsWithSales);
 }
 
 // POST — Create a new product

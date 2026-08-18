@@ -2,10 +2,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logFunnelEvent } from '@/lib/funnel';
 
+/*
+-- MIGRATION REQUIRED
+ALTER TABLE funnel_events 
+  ADD COLUMN utm_source TEXT,
+  ADD COLUMN utm_medium TEXT,
+  ADD COLUMN utm_campaign TEXT;
+*/
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { productId, sessionId, eventType } = body;
+    const { productId, sessionId, eventType, utm_source, utm_medium, utm_campaign } = body;
 
     if (!productId || !sessionId || !eventType) {
       return NextResponse.json(
@@ -27,6 +35,9 @@ export async function POST(request: NextRequest) {
       sessionId,
       eventType,
       metadata: body.metadata || {},
+      utm_source,
+      utm_medium,
+      utm_campaign,
     });
 
     return NextResponse.json({ success: true });

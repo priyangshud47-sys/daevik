@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
@@ -317,17 +318,17 @@ function CheckoutContent() {
         <div className="zig-checkout-wrapper">
           {/* Header with Logo + Back Link */}
           <div className="zig-checkout-header">
-            <a href="/product/zero-investment-guide" className="zig-back-link">
+            <Link href="/product/zero-investment-guide" className="zig-back-link">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" /></svg>
               Back to Product Page
-            </a>
+            </Link>
             <div className="zig-checkout-logo">
-              <a href="/product/zero-investment-guide">
+              <Link href="/product/zero-investment-guide">
                 <span className="zig-logo-text">Dae<span className="zig-logo-accent">vik</span></span>
-              </a>
+              </Link>
             </div>
             <div className="zig-breadcrumb">
-              <a href="/product/zero-investment-guide">Zero Investment Guide</a>
+              <Link href="/product/zero-investment-guide">Zero Investment Guide</Link>
               <span className="zig-breadcrumb-sep">›</span>
               <span className="zig-breadcrumb-current">Checkout</span>
             </div>

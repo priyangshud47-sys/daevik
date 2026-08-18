@@ -5,7 +5,7 @@ const FB_PIXEL_ID = process.env.FB_PIXEL_ID || '';
 const FB_ACCESS_TOKEN = process.env.FB_ACCESS_TOKEN || '';
 const FB_TEST_EVENT_CODE = process.env.FB_TEST_EVENT_CODE || '';
 const FB_API_VERSION = 'v18.0';
-const FB_API_URL = `https://graph.facebook.com/${FB_API_VERSION}`;
+
 
 type EventName = 'PageView' | 'InitiateCheckout' | 'Purchase' | 'AddToCart';
 

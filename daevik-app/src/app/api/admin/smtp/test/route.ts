@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
+import * as nodemailer from 'nodemailer';
 
 export async function POST(request: NextRequest) {
   const session = await auth();
@@ -14,13 +15,24 @@ export async function POST(request: NextRequest) {
        return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // In a real application, you would use nodemailer here to verify the connection.
-    // e.g. await transporter.verify();
-    
-    // Simulating connection verification success:
-    console.log(`[SMTP TEST] Attempting connection to ${body.host}:${body.port} as ${body.username}`);
-    
-    return NextResponse.json({ success: true });
+    // Verify SMTP connection using nodemailer
+    const transporter = nodemailer.createTransport({
+      host: body.host,
+      port: Number(body.port),
+      secure: body.secure,
+      auth: {
+        user: body.username,
+        pass: body.password,
+      },
+    });
+
+    try {
+      await transporter.verify();
+      return NextResponse.json({ success: true });
+    } catch (verifyError: any) {
+      console.error('[SMTP TEST ERROR]', verifyError);
+      return NextResponse.json({ error: verifyError.message || 'SMTP Connection Failed' }, { status: 400 });
+    }
   } catch (error) {
     return NextResponse.json({ error: 'Failed to verify SMTP connection' }, { status: 500 });
   }

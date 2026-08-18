@@ -178,36 +178,7 @@ export async function POST(request: NextRequest) {
       }
 
       case 'paypal': {
-        const ppOrder = await createPayPalOrder({
-          amount: product.price,
-          currency: 'USD',
-          description: product.name,
-          returnUrl: `${appUrl}/api/webhooks/paypal?orderId=${orderId}`,
-          cancelUrl: `${appUrl}/checkout/${product.slug}?cancelled=true`,
-          clientId: gatewayConfig.api_key || '',
-          clientSecret: gatewayConfig.api_secret || '',
-          mode: mode as 'test' | 'live',
-        });
-
-        // Create pending order
-        await supabase.from('orders').insert({
-          id: orderId,
-          product_id: product.id,
-          customer_id: customerId,
-          amount: product.price,
-          currency: 'USD',
-          gateway_used: 'paypal',
-          payment_status: 'pending',
-          gateway_order_id: ppOrder.id,
-        });
-
-        const approveLink = ppOrder.links.find(l => l.rel === 'approve');
-
-        return setSessionCookie(NextResponse.json({
-          gateway: 'pp',
-          orderId,
-          approveUrl: approveLink?.href,
-        }));
+        return NextResponse.json({ error: 'PayPal is not supported for INR products at this time.' }, { status: 400 });
       }
 
       default:

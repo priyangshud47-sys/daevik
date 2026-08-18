@@ -9,15 +9,21 @@ export async function logFunnelEvent(params: {
   sessionId: string;
   eventType: FunnelEventType;
   metadata?: Record<string, unknown>;
+  utm_source?: string;
+  utm_medium?: string;
+  utm_campaign?: string;
 }): Promise<void> {
-  const event: FunnelEventInsert = {
+  const event: FunnelEventInsert & { utm_source?: string; utm_medium?: string; utm_campaign?: string; } = {
     product_id: params.productId,
     session_id: params.sessionId,
     event_type: params.eventType,
     metadata: (params.metadata || {}) as Record<string, string>,
+    utm_source: params.utm_source,
+    utm_medium: params.utm_medium,
+    utm_campaign: params.utm_campaign,
   };
 
-  const { error } = await supabase.from('funnel_events').insert(event);
+  const { error } = await supabase.from('funnel_events').insert(event as any);
 
   if (error) {
     console.error('Failed to log funnel event:', error);
@@ -83,8 +89,9 @@ export async function getFunnelStats(
   checkout_starts: number;
   purchases: number;
   abandoned: number;
+  traffic_sources: { source: string, count: number }[];
 }> {
-  let query = supabase.from('funnel_events').select('event_type');
+  let query = supabase.from('funnel_events').select('event_type, utm_source, utm_medium, utm_campaign');
 
   if (productId) {
     query = query.eq('product_id', productId);
@@ -101,13 +108,26 @@ export async function getFunnelStats(
   const { data, error } = await query;
 
   if (error || !data) {
-    return { page_views: 0, checkout_starts: 0, purchases: 0, abandoned: 0 };
+    return { page_views: 0, checkout_starts: 0, purchases: 0, abandoned: 0, traffic_sources: [] };
   }
+  
+  const sourcesMap = new Map<string, number>();
+  data.forEach(e => {
+    if (e.event_type === 'page_view') {
+      const source = e.utm_source || 'Direct';
+      sourcesMap.set(source, (sourcesMap.get(source) || 0) + 1);
+    }
+  });
+  
+  const traffic_sources = Array.from(sourcesMap.entries())
+    .map(([source, count]) => ({ source, count }))
+    .sort((a, b) => b.count - a.count);
 
   return {
     page_views: data.filter(e => e.event_type === 'page_view').length,
     checkout_starts: data.filter(e => e.event_type === 'checkout_start').length,
     purchases: data.filter(e => e.event_type === 'purchase').length,
     abandoned: data.filter(e => e.event_type === 'abandoned').length,
+    traffic_sources,
   };
 }

@@ -68,12 +68,8 @@ export async function GET(
       return new NextResponse('Failed to generate secure link', { status: 500 });
     }
 
-    // 5. Increment download count (this will fail if column doesn't exist yet, but we catch it)
-    await supabase
-      .from('orders')
-      .update({ download_count: currentCount + 1 })
-      .eq('id', order.id)
-      .select(); // Ignoring error to not break if column is missing during migration
+    // 5. Increment download count atomically via RPC
+    await supabase.rpc('increment_download_count', { order_id: order.id });
 
     // 6. Redirect user to the secure signed URL
     return NextResponse.redirect(signedData.signedUrl);

@@ -1,16 +1,6 @@
-// Email Automation Service (Resend / SMTP)
-import { Resend } from 'resend';
+// Email Automation Service (SMTP)
 import * as nodemailer from 'nodemailer';
 import { supabase } from '@/lib/supabase';
-
-let resendInstance: Resend | null = null;
-function getResend(): Resend {
-  if (!resendInstance) {
-    resendInstance = new Resend(process.env.RESEND_API_KEY || 're_placeholder');
-  }
-  return resendInstance;
-}
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'noreply@daevik.in';
 
 interface SendEmailParams {
   to: string;
@@ -96,16 +86,7 @@ export async function sendEmail(params: SendEmailParams, maxRetries = 3): Promis
           attachments: params.attachments,
         });
       } else {
-        // Fallback to Resend
-        const { error } = await getResend().emails.send({
-          from: `${params.senderName || 'Daevik'} <${FROM_EMAIL}>`,
-          to: params.to,
-          subject: params.subject,
-          html: params.html,
-          attachments: params.attachments,
-        });
-
-        if (error) throw new Error(error.message);
+        throw new Error('SMTP configuration not found or not active');
       }
 
       // Success — update log
@@ -139,7 +120,7 @@ export async function sendEmail(params: SendEmailParams, maxRetries = 3): Promis
   }
 
   console.error(`Email send failed after ${maxRetries} attempts:`, lastError);
-  return false;
+  throw new Error(typeof lastError === 'string' ? lastError : 'Failed to send email');
 }
 
 export async function sendProductDeliveryEmail(params: {
@@ -195,7 +176,7 @@ export async function sendProductDeliveryEmail(params: {
       .single();
 
     if (product) {
-      const checkoutConfig = product.checkout_config as Record<string, any> || {};
+      const checkoutConfig = product.checkout_config as Record<string, unknown> || {};
       const attachedProductId = checkoutConfig.attached_product_id;
 
       if (attachedProductId) {
@@ -218,19 +199,32 @@ export async function sendProductDeliveryEmail(params: {
 
   if (finalFileUrl) {
     try {
-      // Fix relative URLs (e.g., /cdn/...) for server-side fetch
-      let fetchUrl = finalFileUrl;
-      if (fetchUrl.startsWith('/cdn/')) {
-        fetchUrl = `${process.env.SUPABASE_URL}/storage/v1/object/public/${fetchUrl.replace('/cdn/', '')}`;
-      } else if (fetchUrl.startsWith('/')) {
-        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://daevik.in';
-        fetchUrl = `${appUrl}${fetchUrl}`;
+      let storagePath = finalFileUrl;
+      let buffer: Buffer | null = null;
+      let isSuccess = false;
+
+      // Clean up path for Supabase Storage
+      if (storagePath.includes('/cdn/')) {
+         storagePath = storagePath.split('/cdn/product-files/')[1];
+      } else {
+         const match = storagePath.match(/product-files\/(.+)$/);
+         if (match && match[1]) {
+             storagePath = decodeURIComponent(match[1].split('?')[0]);
+         }
       }
 
-      const response = await fetch(fetchUrl);
-      if (response.ok) {
-        const arrayBuffer = await response.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
+      if (storagePath) {
+        const { data, error } = await supabase.storage.from('product-files').download(storagePath);
+        if (!error && data) {
+          const arrayBuffer = await data.arrayBuffer();
+          buffer = Buffer.from(arrayBuffer);
+          isSuccess = true;
+        } else {
+          console.error('Supabase download error for attachment:', error);
+        }
+      }
+
+      if (isSuccess && buffer) {
         
         // Extract filename and extension
         let filename = finalFileName || params.productName;
@@ -255,7 +249,7 @@ export async function sendProductDeliveryEmail(params: {
           content: buffer,
         });
       } else {
-        console.error('Failed to download file for attachment:', response.statusText);
+        console.error('Failed to download file for attachment');
       }
     } catch (err) {
       console.error('Error downloading attachment:', err);

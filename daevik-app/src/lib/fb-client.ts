@@ -1,8 +1,8 @@
-export const trackFbEvent = (eventName: string, params?: any, options?: { eventID?: string }) => {
+export const trackFbEvent = (eventName: string, params?: Record<string, unknown>, options?: { eventID?: string }) => {
   if (typeof window === 'undefined') return;
   let attempts = 0;
   const tryTrack = () => {
-    if (window.fbq && typeof window.fbq === 'function' && window.fbq.loaded) {
+    if (window.fbq && typeof window.fbq === 'function' && (window.fbq as unknown as { loaded?: boolean }).loaded) {
       if (options) {
         window.fbq('track', eventName, params, options);
       } else {

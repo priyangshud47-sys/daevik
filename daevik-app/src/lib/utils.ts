@@ -20,11 +20,9 @@ export function hideSupabaseUrl(url: string | null | undefined): string | null {
 /**
  * Utility to process a product object and hide its Supabase URLs
  */
-export function hideProductUrls<T extends Record<string, any>>(product: T): T {
+export function hideProductUrls<T extends Record<string, unknown>>(product: T): T {
   if (!product) return product;
-  
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const processed: any = { ...product };
+  const processed = { ...product } as Record<string, unknown>;
   
   if ('thumbnail_url' in processed && typeof processed.thumbnail_url === 'string') {
     processed.thumbnail_url = hideSupabaseUrl(processed.thumbnail_url);

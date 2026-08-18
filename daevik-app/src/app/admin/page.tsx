@@ -4,6 +4,9 @@ import { getFunnelStats } from '@/lib/funnel';
 export const dynamic = 'force-dynamic';
 
 import DashboardFilter from './DashboardFilter';
+import DashboardChart from './DashboardChart';
+import DashboardTopProducts from './DashboardTopProducts';
+import RecentTransactions from './RecentTransactions';
 
 type DateRange = 'today' | 'yesterday' | '7days' | '30days' | 'lifetime' | 'custom';
 
@@ -40,6 +43,38 @@ async function getDashboardData(range: DateRange, customStart?: string, customEn
     endDateIso = endDate.toISOString();
   }
 
+  // Prev Period Calculation
+  let prevStartDateIst = new Date(startDateIst);
+  let prevEndDateIst = new Date(endDateIst);
+
+  if (range === 'today') {
+    prevStartDateIst.setUTCDate(prevStartDateIst.getUTCDate() - 1);
+    prevEndDateIst.setUTCDate(prevEndDateIst.getUTCDate() - 1);
+  } else if (range === 'yesterday') {
+    prevStartDateIst.setUTCDate(prevStartDateIst.getUTCDate() - 1);
+    prevEndDateIst.setUTCDate(prevEndDateIst.getUTCDate() - 1);
+  } else if (range === '7days') {
+    prevStartDateIst.setUTCDate(prevStartDateIst.getUTCDate() - 7);
+    prevEndDateIst.setUTCDate(prevEndDateIst.getUTCDate() - 7);
+  } else if (range === '30days') {
+    prevStartDateIst.setUTCDate(prevStartDateIst.getUTCDate() - 30);
+    prevEndDateIst.setUTCDate(prevEndDateIst.getUTCDate() - 30);
+  } else if (range === 'custom' && customStart && customEnd) {
+    const diffTime = endDateIst.getTime() - startDateIst.getTime();
+    prevStartDateIst = new Date(startDateIst.getTime() - diffTime);
+    prevEndDateIst = new Date(endDateIst.getTime() - diffTime);
+  }
+
+  let prevStartDateIso: string | undefined = undefined;
+  let prevEndDateIso: string | undefined = undefined;
+  
+  if (range !== 'lifetime') {
+    const pStartDate = new Date(prevStartDateIst.getTime() - istOffset);
+    const pEndDate = new Date(prevEndDateIst.getTime() - istOffset);
+    prevStartDateIso = pStartDate.toISOString();
+    prevEndDateIso = pEndDate.toISOString();
+  }
+
   let rangeLabel = "Today's";
   if (range === 'yesterday') rangeLabel = "Yesterday's";
   else if (range === '7days') rangeLabel = "Last 7 Days";
@@ -52,8 +87,10 @@ async function getDashboardData(range: DateRange, customStart?: string, customEn
   const sevenDaysAgoUtc = new Date(sevenDaysAgoIst.getTime() - istOffset).toISOString();
 
   // Prepare queries
-  let ordersQuery = supabase.from('orders').select('amount').eq('payment_status', 'completed');
+  let ordersQuery = supabase.from('orders').select('amount, payment_status');
+  let prevOrdersQuery = supabase.from('orders').select('amount, payment_status');
   let customersQuery = supabase.from('customers').select('*', { count: 'exact', head: true });
+  let prevCustomersQuery = supabase.from('customers').select('*', { count: 'exact', head: true });
   let recentOrdersQuery = supabase.from('orders').select('*, product:products(name, slug), customer:customers(name, email)').order('created_at', { ascending: false }).limit(10);
 
   if (startDateIso && endDateIso) {
@@ -61,29 +98,57 @@ async function getDashboardData(range: DateRange, customStart?: string, customEn
     customersQuery = customersQuery.gte('created_at', startDateIso).lt('created_at', endDateIso);
     recentOrdersQuery = recentOrdersQuery.gte('created_at', startDateIso).lt('created_at', endDateIso);
   }
+  
+  if (prevStartDateIso && prevEndDateIso) {
+    prevOrdersQuery = prevOrdersQuery.gte('created_at', prevStartDateIso).lt('created_at', prevEndDateIso);
+    prevCustomersQuery = prevCustomersQuery.gte('created_at', prevStartDateIso).lt('created_at', prevEndDateIso);
+  }
 
   // Execute all database queries concurrently in a single Promise.all
   const [
     { data: filteredOrders },
+    { data: prevOrdersData },
     { count: customerCount },
+    { count: prevCustomerCount },
     { data: recentOrders },
     funnelStats,
+    prevFunnelStats,
     { data: chartOrdersData },
     { data: lifetimeOrdersData }
   ] = await Promise.all([
     ordersQuery,
+    prevOrdersQuery,
     customersQuery,
+    prevCustomersQuery,
     recentOrdersQuery,
     getFunnelStats(undefined, startDateIso, endDateIso),
+    getFunnelStats(undefined, prevStartDateIso, prevEndDateIso),
     // Last 7 days of sales for the chart (always 7 days regardless of filter)
     supabase.from('orders').select('amount, created_at').eq('payment_status', 'completed').gte('created_at', sevenDaysAgoUtc),
     supabase.from('orders').select('amount').eq('payment_status', 'completed')
   ]);
 
-  const salesCount = filteredOrders?.length || 0;
+  const completedOrders = (filteredOrders || []).filter(o => o.payment_status === 'completed');
+  const refundedOrders = (filteredOrders || []).filter(o => o.payment_status === 'refunded');
+  const prevCompletedOrders = (prevOrdersData || []).filter(o => o.payment_status === 'completed');
+
+  const salesCount = completedOrders.length;
+  
+  const refundRate = (filteredOrders || []).length > 0 
+    ? (refundedOrders.length / (filteredOrders || []).length) * 100 
+    : 0;
+
   const lifetimeSalesCount = lifetimeOrdersData?.length || 0;
   const lifetimeRevenue = lifetimeOrdersData?.reduce((sum, o) => sum + Number(o.amount), 0) || 0;
-  const revenue = filteredOrders?.reduce((sum, o) => sum + Number(o.amount), 0) || 0;
+  const revenue = completedOrders.reduce((sum, o) => sum + Number(o.amount), 0);
+  const prevRevenue = prevCompletedOrders.reduce((sum, o) => sum + Number(o.amount), 0);
+  
+  const revenueChange = prevRevenue > 0 ? ((revenue - prevRevenue) / prevRevenue) * 100 : (revenue > 0 ? 100 : 0);
+  const customersChange = (prevCustomerCount || 0) > 0 ? (((customerCount || 0) - (prevCustomerCount || 0)) / (prevCustomerCount || 0)) * 100 : ((customerCount || 0) > 0 ? 100 : 0);
+  
+  const convRate = funnelStats.page_views > 0 ? (funnelStats.purchases / funnelStats.page_views) * 100 : 0;
+  const prevConvRate = prevFunnelStats.page_views > 0 ? (prevFunnelStats.purchases / prevFunnelStats.page_views) * 100 : 0;
+  const convRateChange = prevConvRate > 0 ? ((convRate - prevConvRate) / prevConvRate) * 100 : (convRate > 0 ? 100 : 0);
 
   // Process the 7-day chart data in memory
   const last7Days: { date: string; count: number; revenue: number }[] = [];
@@ -114,13 +179,20 @@ async function getDashboardData(range: DateRange, customStart?: string, customEn
   return {
     salesCount,
     revenue,
+    revenueChange,
     rangeLabel,
     customerCount: customerCount || 0,
+    customersChange,
     recentOrders: recentOrders || [],
     funnelStats,
+    convRate,
+    convRateChange,
+    refundRate,
     last7Days,
     lifetimeSalesCount,
     lifetimeRevenue,
+    startDateIso,
+    endDateIso,
   };
 }
 
@@ -133,172 +205,50 @@ export default async function AdminDashboard({
   const range = (params.range as DateRange) || 'today';
   
   const data = await getDashboardData(range, params.start, params.end);
-  const maxRevenue = Math.max(...data.last7Days.map(d => d.revenue), 1);
+
+  const aov = data.salesCount > 0 ? data.revenue / data.salesCount : 0;
 
   return (
     <div className="animate-fade-in">
       <DashboardFilter />
       
       {/* Stat Cards */}
-      <div className="grid grid-cols-4 gap-6 mb-8">
-        <div className="stat-card">
-          <div className="stat-card-label">{data.rangeLabel} Revenue</div>
-          <div className="stat-card-value">₹{data.revenue.toLocaleString('en-IN')}</div>
-          <div className="stat-card-change positive">
-            {data.salesCount} orders
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-card-label">{data.rangeLabel} Customers</div>
-          <div className="stat-card-value">{data.customerCount}</div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-card-label">Conversion Rate</div>
-          <div className="stat-card-value">
-            {data.funnelStats.page_views > 0
-              ? ((data.funnelStats.purchases / data.funnelStats.page_views) * 100).toFixed(1)
-              : '0'}%
-          </div>
-          <div className="stat-card-change">
-            {data.funnelStats.purchases} purchases / {data.funnelStats.page_views} views
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-card-label">Total Sales</div>
-          <div className="stat-card-value">{data.lifetimeSalesCount}</div>
-          <div className="stat-card-change positive">
-            ₹{data.lifetimeRevenue.toLocaleString('en-IN')} lifetime
-          </div>
-        </div>
-      </div>
-
       <div className="grid grid-cols-3 gap-6 mb-8">
-        {/* Sales Chart */}
-        <div className="card" style={{ gridColumn: 'span 2' }}>
-          <h3 style={{ marginBottom: 'var(--space-6)', fontSize: 'var(--text-lg)' }}>
-            Sales — Last 7 Days
-          </h3>
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 'var(--space-2)', height: '200px' }}>
-            {data.last7Days.map((day, i) => (
-              <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'var(--space-2)' }}>
-                <span className="text-xs font-semibold text-primary">
-                  {day.count > 0 ? day.count : ''}
-                </span>
-                <div
-                  style={{
-                    width: '100%',
-                    maxWidth: '48px',
-                    height: `${Math.max((day.revenue / maxRevenue) * 160, 4)}px`,
-                    background: day.revenue > 0
-                      ? 'linear-gradient(180deg, var(--color-secondary) 0%, var(--color-secondary-dark) 100%)'
-                      : 'var(--color-border-light)',
-                    borderRadius: 'var(--radius-sm) var(--radius-sm) 0 0',
-                    transition: 'height 0.5s ease',
-                  }}
-                />
-                <span className="text-xs text-muted">{day.date}</span>
-              </div>
-            ))}
-          </div>
-        </div>
+        <DashboardChart data={data.last7Days} />
 
-        {/* Funnel Overview */}
-        <div className="card">
-          <h3 style={{ marginBottom: 'var(--space-6)', fontSize: 'var(--text-lg)' }}>
-            Funnel Overview
-          </h3>
-          <div className="funnel">
-            {[
-              { label: 'Page Views', value: data.funnelStats.page_views, color: 'var(--color-info)' },
-              { label: 'Checkout Started', value: data.funnelStats.checkout_starts, color: 'var(--color-secondary)' },
-              { label: 'Purchased', value: data.funnelStats.purchases, color: 'var(--color-success)' },
-              { label: 'Abandoned', value: data.funnelStats.abandoned, color: 'var(--color-error)' },
-            ].map((step, i) => {
-              const maxVal = Math.max(data.funnelStats.page_views, 1);
-              const width = (step.value / maxVal) * 100;
-              return (
-                <div key={i} className="funnel-step">
-                  <div className="funnel-step-bar" style={{ width: `${width}%`, background: step.color, opacity: 0.15 }} />
-                  <span className="funnel-step-label">{step.label}</span>
-                  <span className="funnel-step-value" style={{ color: step.color }}>
-                    {step.value}
-                  </span>
-                </div>
-              );
-            })}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
+          {/* Funnel Overview */}
+          <div className="card">
+            <h3 style={{ marginBottom: 'var(--space-6)', fontSize: 'var(--text-lg)' }}>
+              Funnel Overview
+            </h3>
+            <div className="funnel">
+              {[
+                { label: 'Page Views', value: data.funnelStats.page_views, color: 'var(--color-info)' },
+                { label: 'Checkout Started', value: data.funnelStats.checkout_starts, color: 'var(--color-secondary)' },
+                { label: 'Purchased', value: data.funnelStats.purchases, color: 'var(--color-success)' },
+                { label: 'Abandoned', value: data.funnelStats.abandoned, color: 'var(--color-error)' },
+              ].map((step, i) => {
+                const maxVal = Math.max(data.funnelStats.page_views, 1);
+                const width = (step.value / maxVal) * 100;
+                return (
+                  <div key={i} className="funnel-step">
+                    <div className="funnel-step-bar" style={{ width: `${width}%`, background: step.color, opacity: 0.15 }} />
+                    <span className="funnel-step-label">{step.label}</span>
+                    <span className="funnel-step-value" style={{ color: step.color }}>
+                      {step.value}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
+          
+          <DashboardTopProducts startDateIso={data.startDateIso} endDateIso={data.endDateIso} />
         </div>
       </div>
 
-      {/* Recent Transactions */}
-      <div className="card">
-        <h3 style={{ marginBottom: 'var(--space-4)', fontSize: 'var(--text-lg)' }}>
-          {data.rangeLabel === 'Lifetime' ? 'All Transactions' : 'Recent Transactions'}
-        </h3>
-        {data.recentOrders.length > 0 ? (
-          <div className="table-container" style={{ border: 'none' }}>
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Customer</th>
-                  <th>Product</th>
-                  <th>Amount</th>
-                  <th>Gateway</th>
-                  <th>Status</th>
-                  <th>Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.recentOrders.map((order) => {
-                  const customer = order.customer as { name: string; email: string } | null;
-                  const product = order.product as { name: string; slug: string } | null;
-                  return (
-                    <tr key={order.id}>
-                      <td>
-                        <div className="font-semibold">{customer?.name || 'Unknown'}</div>
-                        <div className="text-xs text-muted">{customer?.email || ''}</div>
-                      </td>
-                      <td>{product?.name || 'Deleted Product'}</td>
-                      <td className="font-semibold">₹{Number(order.amount).toLocaleString('en-IN')}</td>
-                      <td>
-                        <span className="badge badge-neutral" style={{ textTransform: 'capitalize' }}>
-                          {order.gateway_used}
-                        </span>
-                      </td>
-                      <td>
-                        <span className={`badge ${
-                          order.payment_status === 'completed' ? 'badge-success' :
-                          order.payment_status === 'failed' ? 'badge-error' :
-                          order.payment_status === 'refunded' ? 'badge-warning' :
-                          'badge-neutral'
-                        }`}>
-                          {order.payment_status}
-                        </span>
-                      </td>
-                      <td className="text-sm text-muted">
-                        {new Date(order.created_at).toLocaleDateString('en-IN', {
-                          day: 'numeric',
-                          month: 'short',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="empty-state" style={{ padding: 'var(--space-8)' }}>
-            <h3>No Transactions {data.rangeLabel === 'Lifetime' ? 'Yet' : 'in This Period'}</h3>
-            <p>Orders will appear here once customers make purchases.</p>
-          </div>
-        )}
-      </div>
+      <RecentTransactions orders={data.recentOrders as any} rangeLabel={data.rangeLabel} />
     </div>
   );
 }

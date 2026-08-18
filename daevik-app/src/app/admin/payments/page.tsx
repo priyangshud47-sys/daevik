@@ -49,10 +49,20 @@ export default function PaymentsPage() {
   const { showToast } = useToast();
   const [formData, setFormData] = useState<Record<string, Record<string, string>>>({});
   const [showSecrets, setShowSecrets] = useState<Record<string, boolean>>({});
+  const [products, setProducts] = useState<any[]>([]);
+  const [productSaving, setProductSaving] = useState<string | null>(null);
 
   const fetchConfigs = useCallback(async () => {
     try {
-      const res = await fetch('/api/admin/gateways');
+      const [res, prodRes] = await Promise.all([
+        fetch('/api/admin/gateways'),
+        fetch('/api/admin/products')
+      ]);
+      
+      if (prodRes.ok) {
+        setProducts(await prodRes.json());
+      }
+
       if (res.ok) {
         const data = await res.json();
         setConfigs(data);
@@ -105,6 +115,29 @@ export default function PaymentsPage() {
       showToast('Failed to save settings', 'error');
     } finally {
       setSaving(null);
+    }
+  };
+
+
+  const handleProductGateway = async (productId: string, slug: string, provider: string) => {
+    setProductSaving(productId);
+    try {
+      const p = products.find(prod => prod.id === productId);
+      const newConfig = { ...(p.checkout_config || {}), gateway: provider };
+      
+      const res = await fetch(`/api/admin/products/${slug}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ checkout_config: newConfig })
+      });
+      if (res.ok) {
+        showToast('Product gateway updated', 'success');
+        setProducts(products.map(prod => prod.id === productId ? { ...prod, checkout_config: newConfig } : prod));
+      }
+    } catch (e) {
+      showToast('Failed to update product', 'error');
+    } finally {
+      setProductSaving(null);
     }
   };
 
@@ -252,7 +285,32 @@ export default function PaymentsPage() {
                   <p className="text-xs text-muted mt-1">Select whether this gateway is in test or live mode.</p>
                 </div>
 
-                <div>
+
+                {/* Connection Test & Webhook */}
+                <div style={{ marginTop: 'var(--space-2)', paddingTop: 'var(--space-4)', borderTop: '1px solid var(--color-border-light)' }}>
+                  <div className="form-group mb-4">
+                    <label className="form-label">Webhook URL (Read-only)</label>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <input
+                        className="form-input text-muted text-sm"
+                        style={{ flex: 1, backgroundColor: 'var(--color-bg-alt)' }}
+                        readOnly
+                        value={`https://${typeof window !== 'undefined' ? window.location.host : 'daevik.in'}/api/webhooks/${config.provider}`}
+                      />
+                      <button 
+                        className="btn btn-secondary btn-sm"
+                        onClick={() => {
+                          navigator.clipboard.writeText(`https://${typeof window !== 'undefined' ? window.location.host : 'daevik.in'}/api/webhooks/${config.provider}`);
+                          showToast('Webhook URL copied!', 'success');
+                        }}
+                      >
+                        Copy
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
                   <button
                     className="btn btn-primary"
                     onClick={() => handleSave(config.provider)}
@@ -264,14 +322,76 @@ export default function PaymentsPage() {
                       'Save Settings'
                     )}
                   </button>
+                  <button
+                    className="btn btn-secondary"
+                    onClick={async () => {
+                      showToast(`Testing connection for ${info.name}...`, 'info');
+                      try {
+                        const res = await fetch(`/api/admin/gateways/${config.provider}/test`, { method: 'POST' });
+                        if (res.ok) {
+                          showToast(`Connection successful for ${info.name}!`, 'success');
+                        } else {
+                          showToast(`Connection failed for ${info.name}`, 'error');
+                        }
+                      } catch (e) {
+                        showToast('Error testing connection', 'error');
+                      }
+                    }}
+                  >
+                    Test Connection
+                  </button>
                 </div>
+
               </div>
             </div>
           );
         })}
       </div>
 
-      
+      <div className="card mt-8">
+        <h3 style={{ fontSize: 'var(--text-lg)', marginBottom: 'var(--space-2)' }}>Per-Product Gateway Assignment</h3>
+        <p className="text-secondary text-sm mb-4">Assign a specific payment gateway for each product. Defaults to the first active gateway.</p>
+        
+        {products.length > 0 ? (
+          <div className="table-container">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Gateway</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {products.map(p => (
+                  <tr key={p.id}>
+                    <td className="font-semibold text-sm">{p.name}</td>
+                    <td>
+                      <select 
+                        className="form-input text-sm" 
+                        value={p.checkout_config?.gateway || 'default'}
+                        onChange={(e) => handleProductGateway(p.id, p.slug, e.target.value)}
+                        disabled={productSaving === p.id}
+                      >
+                        <option value="default">Auto (First Active)</option>
+                        {configs.map(c => (
+                          <option key={c.provider} value={c.provider}>{gatewayInfo[c.provider]?.name || c.provider}</option>
+                        ))}
+                      </select>
+                    </td>
+                    <td>
+                      {productSaving === p.id && <span className="text-xs text-muted">Saving...</span>}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="text-sm text-muted">No products found.</div>
+        )}
+      </div>
+
     </div>
   );
 }

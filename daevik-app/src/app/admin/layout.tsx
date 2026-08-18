@@ -1,9 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { signOut } from 'next-auth/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ToastProvider } from '@/components/ToastProvider';
 
 const navItems = [
@@ -56,7 +56,37 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [sessionActive, setSessionActive] = useState(true);
+
+  // Keyboard Shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Cmd/Ctrl + K for search
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setSearchOpen(true);
+      }
+      // Esc to close
+      if (e.key === 'Escape') {
+        setSearchOpen(false);
+        setNotificationsOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Session activity simulator (could be based on NextAuth session exp)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setSessionActive(Math.random() > 0.1); // Mock 10% chance of idle/inactive
+    }, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Don't wrap login page in admin layout
   if (pathname === '/admin/login' || pathname === '/login') {
@@ -149,12 +179,78 @@ export default function AdminLayout({
             </button>
             <h1 className="admin-header-title">{pageTitle}</h1>
           </div>
+
+          <div className="flex items-center gap-4">
+            {/* Global Search */}
+            <button 
+              className="btn btn-icon btn-ghost text-muted"
+              onClick={() => setSearchOpen(true)}
+              title="Search (Cmd+K)"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+            </button>
+
+            {/* Notifications */}
+            <div style={{ position: 'relative' }}>
+              <button 
+                className="btn btn-icon btn-ghost text-muted"
+                onClick={() => setNotificationsOpen(!notificationsOpen)}
+              >
+                <div style={{ position: 'relative' }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                  </svg>
+                  <span style={{ position: 'absolute', top: -2, right: -2, width: 8, height: 8, background: 'var(--color-error)', borderRadius: '50%' }}></span>
+                </div>
+              </button>
+              
+              {notificationsOpen && (
+                <div className="card" style={{ position: 'absolute', right: 0, top: '100%', marginTop: '8px', width: '300px', zIndex: 50, padding: 'var(--space-3)' }}>
+                  <h4 className="text-sm font-bold mb-2">Notifications</h4>
+                  <div className="text-xs text-muted mb-2">New order #1024 placed</div>
+                  <div className="text-xs text-muted mb-2">Payment gateway error</div>
+                  <button className="btn btn-sm btn-ghost w-full text-xs">Mark all read</button>
+                </div>
+              )}
+            </div>
+
+            {/* Session Activity Indicator */}
+            <div className="flex items-center gap-2" title={sessionActive ? 'Session Active' : 'Session Expiring Soon'}>
+               <span style={{ width: 10, height: 10, borderRadius: '50%', background: sessionActive ? 'var(--color-success)' : 'var(--color-warning)' }}></span>
+               <span className="text-sm text-muted hidden sm:inline-block">Admin</span>
+            </div>
+          </div>
+
         </header>
 
         <main className="admin-content">
           {children}
         </main>
       </div>
+
+
+      {/* Global Search Modal */}
+      {searchOpen && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', paddingTop: '10vh' }}>
+           <div className="card" style={{ width: '100%', maxWidth: '600px', margin: '0 20px', height: 'fit-content' }}>
+             <div className="flex justify-between items-center mb-4">
+                <input 
+                  type="text" 
+                  className="form-input w-full" 
+                  placeholder="Search orders, customers, projects... (Press Esc to close)"
+                  autoFocus
+                />
+             </div>
+             <div className="text-xs text-muted">Recent Searches</div>
+             <div className="mt-2 text-sm cursor-pointer hover:text-gold" onClick={() => { setSearchOpen(false); router.push('/admin/orders'); }}>Order #1234</div>
+             <div className="mt-2 text-sm cursor-pointer hover:text-gold" onClick={() => { setSearchOpen(false); router.push('/admin/projects'); }}>Zero Investment Guide</div>
+           </div>
+        </div>
+      )}
 
       {/* Show mobile menu button */}
       <style>{`

@@ -15,6 +15,7 @@ interface EmailTemplate {
 
 export default function EmailsPage() {
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
+  const [emailLogs, setEmailLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<EmailTemplate | null>(null);
   const [form, setForm] = useState({ name: '', subject: '', body: '', sender_name: '' });
@@ -53,7 +54,13 @@ export default function EmailsPage() {
 
   const fetchTemplates = useCallback(async () => {
     try {
-      const res = await fetch('/api/admin/emails');
+      const [res, logsRes] = await Promise.all([
+        fetch('/api/admin/emails'),
+        fetch('/api/admin/emails/logs')
+      ]);
+      if (logsRes.ok) {
+        setEmailLogs(await logsRes.json());
+      }
       if (res.ok) {
         const data = await res.json();
         setTemplates(data);
@@ -324,19 +331,18 @@ export default function EmailsPage() {
               Custom SMTP Configuration
             </h3>
             <p className="text-sm text-muted" style={{ marginBottom: 'var(--space-4)' }}>
-              Use your own SMTP server (e.g. Gmail, AWS SES) instead of the default Resend configuration.
+              Use your own SMTP server (e.g. Gmail, AWS SES, Hostinger) to send transactional emails.
             </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
               
-              <div className="form-group flex gap-2" style={{ alignItems: 'center' }}>
+              <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
                 <input 
                   type="checkbox" 
-                  id="smtp_active"
                   checked={smtpForm.active} 
                   onChange={(e) => setSmtpForm({ ...smtpForm, active: e.target.checked })} 
                 />
-                <label htmlFor="smtp_active" className="font-semibold cursor-pointer text-sm">
-                  Enable Custom SMTP (Overrides Resend)
+                <label className="form-label" style={{ marginBottom: 0 }}>
+                  Enable SMTP Delivery
                 </label>
               </div>
 

@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
@@ -94,9 +95,9 @@ function ConfirmationContent() {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)', alignItems: 'center' }}>
-          <a href="/" className="btn btn-primary btn-lg" style={{ minWidth: '200px' }}>
+          <Link href="/" className="btn btn-primary btn-lg" style={{ minWidth: '200px' }}>
             Back to Home
-          </a>
+          </Link>
           <p className="text-sm text-muted" style={{ marginTop: 'var(--space-2)' }}>
             Need help? Contact us at <a href="mailto:support@daevik.in" style={{ color: 'var(--color-primary)' }}>support@daevik.in</a>
           </p>

@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import TrackPurchase from '@/components/TrackPurchase';
-import { hideSupabaseUrl } from '@/lib/utils';
+
 import DownloadButton from './DownloadButton';
 
 export default async function ThankYouPage({
@@ -13,7 +13,7 @@ export default async function ThankYouPage({
   searchParams: Promise<{ orderId?: string }>;
 }) {
   const { slug } = await params;
-  let { orderId } = await searchParams;
+  const { orderId } = await searchParams;
 
   if (!orderId) {
     return (
@@ -68,7 +68,7 @@ export default async function ThankYouPage({
   if (!project) return notFound();
 
   // 3. Fetch the attached digital product file
-  const checkoutConfig = project.checkout_config as Record<string, any> || {};
+  const checkoutConfig = project.checkout_config as Record<string, unknown> || {};
   const attachedProductId = checkoutConfig.attached_product_id;
   
   let downloadUrl = null;

@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
@@ -50,9 +51,9 @@ export default async function ProductLandingPage({ params }: Props) {
     <div className="checkout-layout">
       <div style={{ maxWidth: '800px', margin: '0 auto', padding: 'var(--space-8) var(--space-6)' }}>
         <header style={{ marginBottom: 'var(--space-8)' }}>
-          <a href="/" className="site-logo" style={{ fontSize: 'var(--text-xl)' }}>
+          <Link href="/" className="site-logo" style={{ fontSize: 'var(--text-xl)' }}>
             Dae<span style={{ color: 'var(--color-secondary)' }}>vik</span>
-          </a>
+          </Link>
         </header>
 
         <div className="card card-elevated" style={{ padding: 'var(--space-10)' }}>

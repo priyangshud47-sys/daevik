@@ -11,6 +11,9 @@ interface Product {
   price: number;
   description: string | null;
   product_file_url: string | null;
+  image_url: string | null;
+  status: string;
+  sales_count?: number;
   created_at: string;
 }
 
@@ -25,11 +28,15 @@ export default function ProductsPage() {
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
   // New product form state
   const [name, setName] = useState('');
   const [price, setPrice] = useState('149');
   const [description, setDescription] = useState('');
   const [file, setFile] = useState<File | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
 
   const fetchProducts = useCallback(async () => {
     try {
@@ -48,6 +55,88 @@ export default function ProductsPage() {
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
 
 
+
+
+  const handleToggleStatus = async (product: Product) => {
+    const newStatus = product.status === 'live' ? 'draft' : 'live';
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/admin/products/${product.slug}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (!res.ok) throw new Error('Failed to update status');
+      showToast('Status updated', 'success');
+      fetchProducts();
+    } catch (e: any) {
+      showToast(e.message, 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDuplicate = async (product: Product) => {
+    setSaving(true);
+    try {
+      const newSlug = `${product.slug}-copy-${Date.now()}`;
+      const res = await fetch('/api/admin/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: `${product.name} (Copy)`,
+          slug: newSlug,
+          price: product.price,
+          description: product.description,
+          product_file_url: product.product_file_url,
+          image_url: product.image_url,
+          tag: 'digital_file',
+        }),
+      });
+      if (!res.ok) throw new Error('Failed to duplicate');
+      showToast('Product duplicated', 'success');
+      fetchProducts();
+    } catch (e: any) {
+      showToast(e.message, 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleBulkAction = async (action: 'delete' | 'live' | 'draft') => {
+    if (selectedIds.size === 0) return;
+    if (action === 'delete' && !confirm('Are you sure you want to delete selected products?')) return;
+    
+    setSaving(true);
+    try {
+      const ids = Array.from(selectedIds);
+      for (const id of ids) {
+        const prod = products.find(p => p.id === id);
+        if (!prod) continue;
+        if (action === 'delete') {
+          await fetch(`/api/admin/products/${prod.slug}`, { method: 'DELETE' });
+        } else {
+          await fetch(`/api/admin/products/${prod.slug}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: action }),
+          });
+        }
+      }
+      showToast('Bulk action completed', 'success');
+      setSelectedIds(new Set());
+      fetchProducts();
+    } catch (e: any) {
+      showToast(e.message, 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+  
+  const filteredProducts = products.filter(p => 
+    p.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    p.slug.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -92,6 +181,23 @@ export default function ProductsPage() {
       
       productFileUrl = uploadData.url;
 
+      let productImageUrl = null;
+      if (imageFile) {
+        const imageFormData = new FormData();
+        imageFormData.append('file', imageFile);
+        imageFormData.append('bucket', 'product-images');
+        
+        const imgUploadRes = await fetch('/api/admin/upload', {
+          method: 'POST',
+          body: imageFormData,
+        });
+        
+        if (imgUploadRes.ok) {
+          const imgUploadData = await imgUploadRes.json();
+          productImageUrl = imgUploadData.url;
+        }
+      }
+
       // 2. Create Product in Database (ensure slug is unique for files)
       const baseSlug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
       const slug = `${baseSlug}-file-${Date.now()}`;
@@ -105,6 +211,7 @@ export default function ProductsPage() {
           price: parseFloat(price),
           description,
           product_file_url: productFileUrl,
+          image_url: productImageUrl,
           tag: 'digital_file',
         }),
       });
@@ -125,6 +232,7 @@ export default function ProductsPage() {
       setPrice('149');
       setDescription('');
       setFile(null);
+      setImageFile(null);
       fetchProducts();
 
     } catch (error: unknown) {
@@ -140,6 +248,7 @@ export default function ProductsPage() {
     setPrice(product.price.toString());
     setDescription(product.description || '');
     setFile(null); // Optional to update file
+    setImageFile(null);
   };
 
   const closeEditModal = () => {
@@ -148,6 +257,7 @@ export default function ProductsPage() {
     setPrice('149');
     setDescription('');
     setFile(null);
+    setImageFile(null);
   };
 
   const handleEditProduct = async (e: React.FormEvent) => {
@@ -162,6 +272,24 @@ export default function ProductsPage() {
 
     try {
       // 1. Upload File (Optional)
+      let productImageUrl = editingProduct.image_url;
+
+      if (imageFile) {
+        const imageFormData = new FormData();
+        imageFormData.append('file', imageFile);
+        imageFormData.append('bucket', 'product-images');
+        
+        const imgUploadRes = await fetch('/api/admin/upload', {
+          method: 'POST',
+          body: imageFormData,
+        });
+        
+        if (imgUploadRes.ok) {
+          const imgUploadData = await imgUploadRes.json();
+          productImageUrl = imgUploadData.url;
+        }
+      }
+
       if (file) {
         const formData = new FormData();
         formData.append('file', file);
@@ -185,6 +313,7 @@ export default function ProductsPage() {
           price: parseFloat(price),
           description,
           product_file_url: productFileUrl,
+          image_url: productImageUrl,
         }),
       });
 
@@ -239,54 +368,109 @@ export default function ProductsPage() {
         </button>
       </div>
 
+      <div className="flex justify-between items-center mb-4 gap-4">
+        <input
+          type="text"
+          placeholder="Search products..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="form-input max-w-sm"
+          style={{ width: '300px', padding: '8px 12px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)' }}
+        />
+        {selectedIds.size > 0 && (
+          <div className="flex gap-2">
+            <span className="text-sm self-center mr-2">{selectedIds.size} selected</span>
+            <button className="btn btn-sm btn-ghost" onClick={() => handleBulkAction('live')} disabled={saving}>Set Live</button>
+            <button className="btn btn-sm btn-ghost" onClick={() => handleBulkAction('draft')} disabled={saving}>Set Draft</button>
+            <button className="btn btn-sm btn-ghost text-red-500" onClick={() => handleBulkAction('delete')} disabled={saving} style={{ color: 'var(--color-danger)' }}>Delete</button>
+          </div>
+        )}
+      </div>
+
       
 
-      {products.length > 0 ? (
+      {filteredProducts.length > 0 ? (
         <div className="table-container">
           <table className="table">
             <thead>
               <tr>
-                <th>Product Name</th>
+                <th style={{ width: '40px' }}>
+                  <input 
+                    type="checkbox" 
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedIds(new Set(filteredProducts.map(p => p.id)));
+                      } else {
+                        setSelectedIds(new Set());
+                      }
+                    }}
+                    checked={selectedIds.size === filteredProducts.length && filteredProducts.length > 0}
+                  />
+                </th>
+                <th>Product</th>
+                <th>Status</th>
+                <th>Sales</th>
                 <th>Price</th>
-                <th>File Attached</th>
-                <th style={{ textAlign: 'right' }}>Created At</th>
                 <th style={{ textAlign: 'right' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {products.map((product) => (
+              {filteredProducts.map((product) => (
                 <tr key={product.id}>
                   <td>
-                    <div className="font-semibold">{product.name}</div>
-                    <div className="text-sm text-muted" style={{ fontFamily: 'monospace' }}>/{product.slug}</div>
+                    <input 
+                      type="checkbox" 
+                      checked={selectedIds.has(product.id)}
+                      onChange={(e) => {
+                        const newSet = new Set(selectedIds);
+                        if (e.target.checked) newSet.add(product.id);
+                        else newSet.delete(product.id);
+                        setSelectedIds(newSet);
+                      }}
+                    />
                   </td>
-                  <td className="font-semibold">₹{Number(product.price).toLocaleString('en-IN')}</td>
                   <td>
-                    {product.product_file_url ? (
-                      <div className="flex items-center gap-2">
-                        <span className="badge badge-success text-xs" style={{ textTransform: 'uppercase', fontSize: '0.65rem' }}>
-                          {product.product_file_url.split('.').pop()?.split('?')[0]?.substring(0, 4) || 'FILE'}
-                        </span>
-                        <a href={`/api/admin/download?url=${encodeURIComponent(product.product_file_url)}`} target="_blank" rel="noopener noreferrer" className="text-sm font-medium" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>
-                          View
-                        </a>
+                    <div className="flex items-center gap-3">
+                      <div style={{
+                        width: '40px', height: '40px', borderRadius: 'var(--radius-md)',
+                        background: 'var(--color-bg-warm)', flexShrink: 0, overflow: 'hidden',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}>
+                        {product.image_url ? (
+                          <img src={product.image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ color: 'var(--color-text-muted)' }}>
+                            <path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                        )}
                       </div>
-                    ) : (
-                      <span className="badge badge-neutral">No File</span>
-                    )}
+                      <div>
+                        <div className="font-semibold flex items-center gap-2">
+                          {product.name}
+                          {product.status === 'draft' && <span className="badge badge-neutral text-xs">Draft</span>}
+                        </div>
+                        <div className="text-xs text-muted" style={{ fontFamily: 'monospace' }}>/{product.slug}</div>
+                      </div>
+                    </div>
                   </td>
-                  <td style={{ textAlign: 'right', color: 'var(--color-text-muted)' }}>{new Date(product.created_at).toLocaleDateString()}</td>
+                  <td>
+                    <button
+                      className={`btn btn-sm ${product.status === 'live' ? 'btn-secondary' : 'btn-ghost'}`}
+                      onClick={() => handleToggleStatus(product)}
+                      disabled={saving}
+                    >
+                      {product.status === 'live' ? 'Live' : 'Draft'}
+                    </button>
+                  </td>
+                  <td>{product.sales_count || 0}</td>
+                  <td className="font-semibold">₹{Number(product.price).toLocaleString('en-IN')}</td>
                   <td style={{ textAlign: 'right' }}>
                     <div className="flex gap-2 justify-end">
-                      <button className="btn btn-ghost btn-sm" onClick={() => openEditModal(product)}>
-                        Edit
+                      <button className="btn btn-ghost btn-sm" onClick={() => handleDuplicate(product)} disabled={saving}>
+                        Duplicate
                       </button>
-                      <button 
-                        className="btn btn-ghost btn-sm" 
-                        onClick={() => { setProductToDelete(product); setShowDeleteConfirm(true); }}
-                        style={{ color: 'var(--color-danger)' }}
-                      >
-                        Delete
+                      <button className="btn btn-ghost btn-sm" onClick={() => openEditModal(product)} disabled={saving}>
+                        Edit
                       </button>
                     </div>
                   </td>
@@ -346,6 +530,19 @@ export default function ProductsPage() {
                 />
               </div>
 
+              <div>
+                <label className="text-sm font-semibold mb-1 block">Product Image (Thumbnail)</label>
+                <input 
+                  type="file" 
+                  accept="image/*"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      setImageFile(e.target.files[0]);
+                    }
+                  }} 
+                  style={{ width: '100%', padding: '10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)' }}
+                />
+              </div>
               <div>
                 <label className="text-sm font-semibold mb-1 block">Upload File (PDF, ZIP, Media)</label>
                 <input 
@@ -424,6 +621,24 @@ export default function ProductsPage() {
                 />
               </div>
 
+              <div>
+                <label className="text-sm font-semibold mb-3 block">Product Image</label>
+                {editingProduct.image_url && (
+                  <div className="mb-3">
+                    <img src={editingProduct.image_url} alt="Thumbnail" style={{ width: '100px', height: '100px', objectFit: 'cover', borderRadius: 'var(--radius-md)' }} />
+                  </div>
+                )}
+                <input 
+                  type="file" 
+                  accept="image/*"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      setImageFile(e.target.files[0]);
+                    }
+                  }} 
+                  style={{ width: '100%', padding: '10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', marginBottom: '16px' }}
+                />
+              </div>
               <div>
                 <label className="text-sm font-semibold mb-3 block">Product File</label>
                 
