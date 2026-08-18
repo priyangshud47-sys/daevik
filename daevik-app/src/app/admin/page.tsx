@@ -213,6 +213,54 @@ export default async function AdminDashboard({
       <DashboardFilter />
       
       {/* Stat Cards */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+        gap: 'var(--space-6)',
+        marginBottom: 'var(--space-8)'
+      }}>
+        <div className="stat-card">
+          <div className="stat-card-label">{data.rangeLabel} Sales</div>
+          <div className="stat-card-value">{data.salesCount}</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-card-label">Total Revenue</div>
+          <div className="stat-card-value" style={{ color: 'var(--color-primary)' }}>₹{data.revenue.toLocaleString('en-IN')}</div>
+          {data.revenueChange !== 0 && (
+            <span className={`badge ${data.revenueChange > 0 ? 'badge-success' : 'badge-error'} mt-2`}>
+              {data.revenueChange > 0 ? '+' : ''}{data.revenueChange.toFixed(1)}% vs prev
+            </span>
+          )}
+        </div>
+        <div className="stat-card">
+          <div className="stat-card-label">Total Customers</div>
+          <div className="stat-card-value">{data.customerCount}</div>
+          {data.customersChange !== 0 && (
+            <span className={`badge ${data.customersChange > 0 ? 'badge-success' : 'badge-error'} mt-2`}>
+              {data.customersChange > 0 ? '+' : ''}{data.customersChange.toFixed(1)}% vs prev
+            </span>
+          )}
+        </div>
+        <div className="stat-card">
+          <div className="stat-card-label">Conversion Rate</div>
+          <div className="stat-card-value">{data.convRate.toFixed(1)}%</div>
+          <div className="text-xs text-muted mt-2">{data.funnelStats.purchases} purchases / {data.funnelStats.page_views} views</div>
+          {data.convRateChange !== 0 && (
+            <span className={`badge ${data.convRateChange > 0 ? 'badge-success' : 'badge-error'} mt-1`}>
+              {data.convRateChange > 0 ? '+' : ''}{data.convRateChange.toFixed(1)}% vs prev
+            </span>
+          )}
+        </div>
+        <div className="stat-card">
+          <div className="stat-card-label">Avg. Order Value</div>
+          <div className="stat-card-value">₹{aov.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-card-label">Refund Rate</div>
+          <div className="stat-card-value">{data.refundRate.toFixed(1)}%</div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-3 gap-6 mb-8">
         <DashboardChart data={data.last7Days} />
 
