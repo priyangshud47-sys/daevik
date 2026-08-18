@@ -35,7 +35,7 @@ CREATE TABLE products (
   thank_you_page_html TEXT,
   checkout_config JSONB DEFAULT '{}',
   product_file_url TEXT,
-  gateway_provider TEXT NOT NULL DEFAULT 'razorpay' CHECK (gateway_provider IN ('razorpay', 'payu', 'paypal')),
+  gateway_provider TEXT NOT NULL DEFAULT 'razorpay' CHECK (gateway_provider IN ('razorpay', 'payu', 'paypal', 'cashfree')),
   fb_pixel_id TEXT,
   fb_access_token TEXT,
   seo_title TEXT,
@@ -71,7 +71,7 @@ CREATE TABLE orders (
   customer_id UUID REFERENCES customers(id) ON DELETE SET NULL,
   amount DECIMAL(10,2) NOT NULL,
   currency TEXT NOT NULL DEFAULT 'INR',
-  gateway_used TEXT NOT NULL CHECK (gateway_used IN ('razorpay', 'payu', 'paypal')),
+  gateway_used TEXT NOT NULL CHECK (gateway_used IN ('razorpay', 'payu', 'paypal', 'cashfree')),
   payment_status TEXT NOT NULL DEFAULT 'pending' CHECK (payment_status IN ('pending', 'completed', 'failed', 'refunded')),
   download_count INTEGER DEFAULT 0,
   transaction_id TEXT,
@@ -150,7 +150,7 @@ CREATE INDEX idx_email_logs_status ON email_logs(status);
 -- ==============================================
 CREATE TABLE gateway_configs (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  provider TEXT UNIQUE NOT NULL CHECK (provider IN ('razorpay', 'payu', 'paypal')),
+  provider TEXT UNIQUE NOT NULL CHECK (provider IN ('razorpay', 'payu', 'paypal', 'cashfree')),
   api_key TEXT,
   api_secret TEXT,
   webhook_secret TEXT,
@@ -161,10 +161,10 @@ CREATE TABLE gateway_configs (
 );
 
 -- Insert default gateway entries
-INSERT INTO gateway_configs (provider, active) VALUES
   ('razorpay', false),
   ('payu', false),
-  ('paypal', false);
+  ('paypal', false),
+  ('cashfree', false);
 
 -- ==============================================
 -- FACEBOOK CAPI CONFIG
