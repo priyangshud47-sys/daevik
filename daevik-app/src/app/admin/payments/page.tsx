@@ -40,6 +40,15 @@ const gatewayInfo: Record<string, { name: string; description: string; fields: {
       { key: 'webhook_secret', label: 'Webhook ID', placeholder: 'Your PayPal webhook ID' },
     ],
   },
+  cashfree: {
+    name: 'Cashfree',
+    description: 'Powerful Indian payment gateway with comprehensive coverage.',
+    fields: [
+      { key: 'api_key', label: 'App ID', placeholder: 'Your Cashfree App ID' },
+      { key: 'api_secret', label: 'Secret Key', placeholder: 'Your Cashfree Secret Key' },
+      { key: 'webhook_secret', label: 'Webhook Secret', placeholder: 'Your webhook secret (optional/if needed)' },
+    ],
+  },
 };
 
 export default function PaymentsPage() {

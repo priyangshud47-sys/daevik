@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { createRazorpayOrder } from '@/lib/payments/razorpay';
 import { createPayUFormData } from '@/lib/payments/payu';
 import { createPayPalOrder } from '@/lib/payments/paypal';
+import { createCashfreeOrder } from '@/lib/payments/cashfree';
 import { v4 as uuidv4 } from 'uuid';
 
 export async function POST(request: NextRequest) {
@@ -179,6 +180,43 @@ export async function POST(request: NextRequest) {
 
       case 'paypal': {
         return NextResponse.json({ error: 'PayPal is not supported for INR products at this time.' }, { status: 400 });
+      }
+
+      case 'cashfree': {
+        const cfOrder = await createCashfreeOrder({
+          orderId,
+          orderAmount: product.price,
+          orderCurrency: 'INR',
+          customerDetails: {
+            customerId,
+            customerName,
+            customerEmail,
+            customerPhone: customerPhone || '9999999999', // Cashfree requires a phone number
+          },
+          returnUrl: `${appUrl}/api/webhooks/cashfree?order_id=${orderId}`,
+          appId: gatewayConfig.api_key || '',
+          secretKey: gatewayConfig.api_secret || '',
+          mode,
+        });
+
+        // Create pending order
+        await supabase.from('orders').insert({
+          id: orderId,
+          product_id: product.id,
+          customer_id: customerId,
+          amount: product.price,
+          currency: 'INR',
+          gateway_used: 'cashfree',
+          payment_status: 'pending',
+          gateway_order_id: cfOrder.orderId,
+        });
+
+        return setSessionCookie(NextResponse.json({
+          gateway: 'cashfree',
+          orderId,
+          paymentSessionId: cfOrder.paymentSessionId,
+          mode,
+        }));
       }
 
       default:

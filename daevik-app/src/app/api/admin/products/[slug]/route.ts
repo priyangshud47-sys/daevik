@@ -14,7 +14,7 @@ const productUpdateSchema = z.object({
   tag: z.string().nullable().optional(),
   thumbnail_url: z.string().url().nullable().optional(),
   product_file_url: z.string().nullable().optional(),
-  gateway_provider: z.enum(['razorpay', 'payu', 'paypal']).optional(),
+  gateway_provider: z.enum(['razorpay', 'payu', 'paypal', 'cashfree']).optional(),
   seo_title: z.string().nullable().optional(),
   seo_description: z.string().nullable().optional(),
   og_image_url: z.string().url().nullable().optional(),

@@ -211,6 +211,9 @@ export default function CheckoutPage() {
         case 'pp':
           window.location.href = data.approveUrl;
           break;
+        case 'cashfree':
+          await handleCashfreeCheckout(data);
+          break;
         default:
           throw new Error('Unsupported payment gateway');
       }
@@ -286,6 +289,43 @@ export default function CheckoutPage() {
 
     document.body.appendChild(form);
     form.submit();
+  };
+
+  const handleCashfreeCheckout = async (data: {
+    paymentSessionId: string;
+    mode: string;
+    orderId: string;
+  }) => {
+    // Dynamically load Cashfree script
+    const script = document.createElement('script');
+    script.src = 'https://sdk.cashfree.com/js/v3/cashfree.js';
+    script.async = true;
+    document.body.appendChild(script);
+
+    script.onload = async () => {
+      // Initialize Cashfree
+      const cf = await (window as unknown as { Cashfree: (opts: { mode: string }) => { checkout: (opts: any) => Promise<any> } }).Cashfree({
+        mode: data.mode === 'live' ? 'production' : 'sandbox',
+      });
+
+      const checkoutOptions = {
+        paymentSessionId: data.paymentSessionId,
+        redirectTarget: '_modal', // Opens in a modal overlay
+      };
+
+      cf.checkout(checkoutOptions).then((result: any) => {
+        if (result.error) {
+          setSubmitting(false);
+        }
+        if (result.redirect) {
+          console.log("Payment will be redirected");
+        }
+        if (result.paymentDetails) {
+          // Verify on backend
+          window.location.href = `/thank-you/${slug}?orderId=${data.orderId}`;
+        }
+      });
+    };
   };
 
   if (loading) {

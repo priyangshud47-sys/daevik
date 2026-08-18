@@ -24,7 +24,7 @@ const productSchema = z.object({
   thumbnail_url: z.string().url().nullable().optional(),
   image_url: z.string().url().nullable().optional(),
   product_file_url: z.string().nullable().optional(),
-  gateway_provider: z.enum(['razorpay', 'payu', 'paypal']).default('razorpay'),
+  gateway_provider: z.enum(['razorpay', 'payu', 'paypal', 'cashfree']).default('razorpay'),
   seo_title: z.string().nullable().optional(),
   seo_description: z.string().nullable().optional(),
   og_image_url: z.string().url().nullable().optional(),
