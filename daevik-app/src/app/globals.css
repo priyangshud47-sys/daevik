@@ -110,32 +110,20 @@
   --max-content-width: 1280px;
 }
 
-/* ---- Admin Panel Theme (Dark Tech Glassmorphism) ---- */
+/* ---- Admin Panel Theme (Glassmorphism & Physical Motion) ---- */
 .admin-layout {
-  --color-bg: #0F172A;
-  --color-bg-card: rgba(27, 35, 54, 0.6);
-  --color-border: #475569;
-  --color-border-light: rgba(255, 255, 255, 0.1);
-  --color-text: #F8FAFC;
-  --color-text-secondary: #94A3B8;
-  --color-text-muted: #64748B;
-  
-  --color-primary: #1E293B;
-  --color-primary-light: #334155;
-  --color-primary-darkest: #0F172A;
-  --color-secondary: #334155;
-  --color-accent: #22C55E;
-  
   --font-heading: 'Fira Sans', sans-serif;
   --font-body: 'Fira Sans', sans-serif;
   
-  /* UI-UX Pro Max Key Effects: Backdrop blur (20px), Subtle Border */
-  --admin-glass-bg: rgba(15, 23, 42, 0.7);
-  --admin-glass-border: 1px solid rgba(255, 255, 255, 0.08);
+  /* UI-UX Pro Max Key Effects: Light Glassmorphism */
+  --admin-glass-bg: rgba(255, 255, 255, 0.7);
+  --admin-sidebar-glass-bg: rgba(58, 15, 24, 0.85); /* Based on --color-primary-darkest */
+  --admin-glass-border: 1px solid rgba(255, 255, 255, 0.4);
+  --admin-sidebar-glass-border: 1px solid rgba(255, 255, 255, 0.1);
   --admin-glass-blur: blur(20px);
   
-  /* Taste Skill: Ambient Diffused Shadow for Dark Mode */
-  --shadow-ambient: 0 32px 64px -12px rgba(0, 0, 0, 0.6), 0 0 40px rgba(0, 0, 0, 0.2);
+  /* Taste Skill: Ambient Diffused Shadow for Light Mode */
+  --shadow-ambient: 0 24px 64px -12px rgba(45, 31, 20, 0.08);
   
   /* Emil Kowalski: Physics-based Easings */
   --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
@@ -614,10 +602,10 @@ img {
 
 .admin-sidebar {
   width: var(--sidebar-width);
-  background: var(--admin-glass-bg);
+  background: var(--admin-sidebar-glass-bg);
   backdrop-filter: var(--admin-glass-blur);
-  border-right: var(--admin-glass-border);
-  color: var(--color-text);
+  border-right: var(--admin-sidebar-glass-border);
+  color: var(--color-text-inverse);
   display: flex;
   flex-direction: column;
   position: fixed;
@@ -658,7 +646,7 @@ img {
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-3) var(--space-6);
-  color: var(--color-text-secondary);
+  color: rgba(255, 255, 255, 0.65);
   font-size: var(--text-sm);
   font-weight: 500;
   text-decoration: none;
@@ -668,15 +656,15 @@ img {
 }
 
 .admin-nav-item:hover {
-  color: var(--color-text);
+  color: white;
   background: rgba(255, 255, 255, 0.05);
-  border-left-color: var(--color-accent);
+  border-left-color: var(--color-secondary);
 }
 
 .admin-nav-item.active {
-  color: var(--color-text);
-  background: rgba(34, 197, 94, 0.1);
-  border-left-color: var(--color-accent);
+  color: white;
+  background: rgba(212, 168, 67, 0.1);
+  border-left-color: var(--color-secondary);
 }
 
 .admin-nav-item:active {

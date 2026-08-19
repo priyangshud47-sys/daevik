@@ -212,7 +212,7 @@ export default async function AdminDashboard({
     <div className="animate-fade-in">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <span className="eyebrow" style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--color-text-secondary)', border: '1px solid rgba(255,255,255,0.1)' }}>Overview</span>
+          <span className="eyebrow">Overview</span>
           <h2 style={{ color: 'var(--color-text)' }}>Operations Console</h2>
         </div>
         <div className="flex items-center gap-2" style={{ padding: '8px 16px', background: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.2)', borderRadius: 'var(--radius-full)' }}>
@@ -295,7 +295,7 @@ export default async function AdminDashboard({
                   const maxVal = Math.max(data.funnelStats.page_views, 1);
                   const width = (step.value / maxVal) * 100;
                   return (
-                    <div key={i} className="funnel-step" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                    <div key={i} className="funnel-step" style={{ border: '1px solid var(--color-border-light)' }}>
                       <div className="funnel-step-bar" style={{ width: `${width}%`, background: step.color, opacity: 0.15 }} />
                       <span className="funnel-step-label" style={{ color: 'var(--color-text-secondary)' }}>{step.label}</span>
                       <span className="funnel-step-value" style={{ color: step.color }}>
