@@ -14,7 +14,7 @@ function ConfirmationContent() {
 
   useEffect(() => {
     if (productSlug) {
-      fetch(`/api/admin/products/${productSlug}`)
+      fetch(`/api/products/${productSlug}`)
         .then(res => res.json())
         .then(data => {
           if (data && data.thank_you_page_html) {
