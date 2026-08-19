@@ -64,7 +64,7 @@ export default async function ThankYouPage({
           if (cfData.order_status === 'PAID') {
             await supabase.from('orders').update({
               payment_status: 'completed',
-              gateway_order_id: cfData.cf_order_id ? cfData.cf_order_id.toString() : order.gateway_order_id
+              transaction_id: cfData.cf_order_id ? cfData.cf_order_id.toString() : null
             }).eq('id', order.id);
             order.payment_status = 'completed';
           }

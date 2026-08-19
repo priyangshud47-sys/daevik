@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
           .from('orders')
           .update({
             payment_status: 'completed',
-            gateway_order_id: transactionId ? transactionId.toString() : order.gateway_order_id,
+            transaction_id: transactionId ? transactionId.toString() : null,
           })
           .eq('id', orderId);
 
