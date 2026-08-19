@@ -60,7 +60,8 @@ export function verifyRazorpayPayment(params: RazorpayVerifyParams): boolean {
     .createHmac('sha256', params.keySecret)
     .update(body)
     .digest('hex');
-  return expectedSignature === params.razorpay_signature;
+  if (expectedSignature.length !== params.razorpay_signature.length) return false;
+  return crypto.timingSafeEqual(Buffer.from(expectedSignature), Buffer.from(params.razorpay_signature));
 }
 
 export function verifyRazorpayWebhookSignature(body: string, signature: string, webhookSecret: string): boolean {
@@ -68,5 +69,6 @@ export function verifyRazorpayWebhookSignature(body: string, signature: string, 
     .createHmac('sha256', webhookSecret)
     .update(body)
     .digest('hex');
-  return expectedSignature === signature;
+  if (expectedSignature.length !== signature.length) return false;
+  return crypto.timingSafeEqual(Buffer.from(expectedSignature), Buffer.from(signature));
 }

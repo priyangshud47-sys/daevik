@@ -120,5 +120,6 @@ export function verifyPayPalWebhookSignature(
     .update(expectedSignature)
     .digest('base64');
 
-  return computedSignature === headers['paypal-transmission-sig'];
+  if (computedSignature.length !== headers['paypal-transmission-sig'].length) return false;
+  return crypto.timingSafeEqual(Buffer.from(computedSignature), Buffer.from(headers['paypal-transmission-sig']));
 }

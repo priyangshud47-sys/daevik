@@ -89,5 +89,6 @@ export function verifyPayUResponse(
   }
 
   const expectedHash = crypto.createHash('sha512').update(hashString).digest('hex');
-  return expectedHash === params.hash;
+  if (expectedHash.length !== params.hash.length) return false;
+  return crypto.timingSafeEqual(Buffer.from(expectedHash), Buffer.from(params.hash));
 }

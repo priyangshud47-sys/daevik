@@ -74,7 +74,8 @@ export function verifyCashfreeSignature(
       .update(data)
       .digest('base64');
     
-    return expectedSignature === signature;
+    if (expectedSignature.length !== signature.length) return false;
+    return crypto.timingSafeEqual(Buffer.from(expectedSignature), Buffer.from(signature));
   } catch (error) {
     console.error('Signature verification error:', error);
     return false;
