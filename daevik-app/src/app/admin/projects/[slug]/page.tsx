@@ -191,6 +191,7 @@ export default function ProjectConfigPage({ params }: { params: Promise<{ slug: 
                     <option value="razorpay">Razorpay</option>
                     <option value="payu">PayU</option>
                     <option value="paypal">PayPal</option>
+                    <option value="cashfree">Cashfree</option>
                   </select>
                 </div>
 
