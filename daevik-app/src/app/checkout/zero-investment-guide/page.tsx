@@ -253,23 +253,36 @@ function CheckoutContent() {
     document.body.appendChild(script);
 
     script.onload = async () => {
-      const cf = await (window as unknown as any).Cashfree({
-        mode: data.mode === 'live' ? 'production' : 'sandbox',
-      });
+      try {
+        const cf = (window as unknown as any).Cashfree({
+          mode: data.mode === 'live' ? 'production' : 'sandbox',
+        });
 
-      const checkoutOptions = {
-        paymentSessionId: data.paymentSessionId,
-        redirectTarget: '_modal',
-      };
+        const checkoutOptions = {
+          paymentSessionId: data.paymentSessionId,
+          redirectTarget: '_modal',
+        };
 
-      cf.checkout(checkoutOptions).then((result: any) => {
-        if (result.error) {
+        cf.checkout(checkoutOptions).then((result: any) => {
+          if (result && result.error) {
+            setError(result.error.message || 'Payment failed or cancelled.');
+            setSubmitting(false);
+          }
+          if (result && result.paymentDetails) {
+            window.location.href = `/thank-you/zero-investment-guide?orderId=${data.orderId}`;
+          }
+        }).catch((err: any) => {
+          setError(err?.message || 'Error launching Cashfree modal');
           setSubmitting(false);
-        }
-        if (result.paymentDetails) {
-          window.location.href = `/thank-you/zero-investment-guide?orderId=${data.orderId}`;
-        }
-      });
+        });
+      } catch (err: any) {
+        setError(err?.message || 'Failed to initialize Cashfree SDK');
+        setSubmitting(false);
+      }
+    };
+    script.onerror = () => {
+      setError('Failed to load Cashfree SDK');
+      setSubmitting(false);
     };
   };
 

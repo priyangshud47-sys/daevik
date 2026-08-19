@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
+</head>
+<body>
+    <script>
+        window.onload = () => {
+            const cf = Cashfree({ mode: "sandbox" });
+            console.log(typeof cf.checkout);
+            const res = cf.checkout({ paymentSessionId: "dummy" });
+            console.log("Returns:", res);
+        }
+    </script>
+</body>
+</html>
