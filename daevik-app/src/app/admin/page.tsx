@@ -210,6 +210,20 @@ export default async function AdminDashboard({
 
   return (
     <div className="animate-fade-in">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <span className="eyebrow" style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--color-text-secondary)', border: '1px solid rgba(255,255,255,0.1)' }}>Overview</span>
+          <h2 style={{ color: 'var(--color-text)' }}>Operations Console</h2>
+        </div>
+        <div className="flex items-center gap-2" style={{ padding: '8px 16px', background: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.2)', borderRadius: 'var(--radius-full)' }}>
+          <span className="relative flex h-3 w-3">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-3 w-3" style={{ background: 'var(--color-success)' }}></span>
+          </span>
+          <span className="text-xs font-semibold" style={{ color: 'var(--color-success)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Live Telemetry</span>
+        </div>
+      </div>
+
       <DashboardFilter />
       
       {/* Stat Cards */}
@@ -266,29 +280,31 @@ export default async function AdminDashboard({
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
           {/* Funnel Overview */}
-          <div className="card">
-            <h3 style={{ marginBottom: 'var(--space-6)', fontSize: 'var(--text-lg)' }}>
-              Funnel Overview
-            </h3>
-            <div className="funnel">
-              {[
-                { label: 'Page Views', value: data.funnelStats.page_views, color: 'var(--color-info)' },
-                { label: 'Checkout Started', value: data.funnelStats.checkout_starts, color: 'var(--color-secondary)' },
-                { label: 'Purchased', value: data.funnelStats.purchases, color: 'var(--color-success)' },
-                { label: 'Abandoned', value: data.funnelStats.abandoned, color: 'var(--color-error)' },
-              ].map((step, i) => {
-                const maxVal = Math.max(data.funnelStats.page_views, 1);
-                const width = (step.value / maxVal) * 100;
-                return (
-                  <div key={i} className="funnel-step">
-                    <div className="funnel-step-bar" style={{ width: `${width}%`, background: step.color, opacity: 0.15 }} />
-                    <span className="funnel-step-label">{step.label}</span>
-                    <span className="funnel-step-value" style={{ color: step.color }}>
-                      {step.value}
-                    </span>
-                  </div>
-                );
-              })}
+          <div className="card-outer">
+            <div className="card-inner" style={{ padding: 'var(--space-6)' }}>
+              <h3 style={{ marginBottom: 'var(--space-6)', fontSize: 'var(--text-lg)', color: 'var(--color-text)' }}>
+                Funnel Overview
+              </h3>
+              <div className="funnel">
+                {[
+                  { label: 'Page Views', value: data.funnelStats.page_views, color: 'var(--color-info)' },
+                  { label: 'Checkout Started', value: data.funnelStats.checkout_starts, color: 'var(--color-secondary)' },
+                  { label: 'Purchased', value: data.funnelStats.purchases, color: 'var(--color-success)' },
+                  { label: 'Abandoned', value: data.funnelStats.abandoned, color: 'var(--color-error)' },
+                ].map((step, i) => {
+                  const maxVal = Math.max(data.funnelStats.page_views, 1);
+                  const width = (step.value / maxVal) * 100;
+                  return (
+                    <div key={i} className="funnel-step" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                      <div className="funnel-step-bar" style={{ width: `${width}%`, background: step.color, opacity: 0.15 }} />
+                      <span className="funnel-step-label" style={{ color: 'var(--color-text-secondary)' }}>{step.label}</span>
+                      <span className="funnel-step-value" style={{ color: step.color }}>
+                        {step.value}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
           

@@ -5,7 +5,7 @@
    - Golden/Mustard Yellow: secondary/accent
    - Chakra spectrum: small accent details only
    ============================================================ */
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&display=swap');
 /* ---- CSS Custom Properties (Design Tokens) ---- */
 :root {
   /* Primary - Deep Maroon/Burgundy */
@@ -108,6 +108,45 @@
   --sidebar-width: 260px;
   --header-height: 64px;
   --max-content-width: 1280px;
+}
+
+/* ---- Admin Panel Theme (Dark Tech Glassmorphism) ---- */
+.admin-layout {
+  --color-bg: #0F172A;
+  --color-bg-card: rgba(27, 35, 54, 0.6);
+  --color-border: #475569;
+  --color-border-light: rgba(255, 255, 255, 0.1);
+  --color-text: #F8FAFC;
+  --color-text-secondary: #94A3B8;
+  --color-text-muted: #64748B;
+  
+  --color-primary: #1E293B;
+  --color-primary-light: #334155;
+  --color-primary-darkest: #0F172A;
+  --color-secondary: #334155;
+  --color-accent: #22C55E;
+  
+  --font-heading: 'Fira Sans', sans-serif;
+  --font-body: 'Fira Sans', sans-serif;
+  
+  /* UI-UX Pro Max Key Effects: Backdrop blur (20px), Subtle Border */
+  --admin-glass-bg: rgba(15, 23, 42, 0.7);
+  --admin-glass-border: 1px solid rgba(255, 255, 255, 0.08);
+  --admin-glass-blur: blur(20px);
+  
+  /* Taste Skill: Ambient Diffused Shadow for Dark Mode */
+  --shadow-ambient: 0 32px 64px -12px rgba(0, 0, 0, 0.6), 0 0 40px rgba(0, 0, 0, 0.2);
+  
+  /* Emil Kowalski: Physics-based Easings */
+  --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
+  --transition-spring: 400ms var(--ease-spring);
+}
+
+.admin-layout {
+  background: var(--color-bg);
+  min-height: 100vh;
+  color: var(--color-text);
+  font-family: var(--font-body);
 }
 
 /* ---- Reset & Base Styles ---- */
@@ -575,8 +614,10 @@ img {
 
 .admin-sidebar {
   width: var(--sidebar-width);
-  background: var(--color-primary-darkest);
-  color: var(--color-text-inverse);
+  background: var(--admin-glass-bg);
+  backdrop-filter: var(--admin-glass-blur);
+  border-right: var(--admin-glass-border);
+  color: var(--color-text);
   display: flex;
   flex-direction: column;
   position: fixed;
@@ -584,7 +625,7 @@ img {
   left: 0;
   bottom: 0;
   z-index: 100;
-  transition: transform var(--transition-base);
+  transition: transform var(--transition-spring);
 }
 
 .admin-sidebar-logo {
@@ -601,7 +642,7 @@ img {
 
 .admin-sidebar-logo span {
   font-size: var(--text-xs);
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--color-text-muted);
   margin-top: var(--space-1);
   display: block;
 }
@@ -617,24 +658,29 @@ img {
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-3) var(--space-6);
-  color: rgba(255, 255, 255, 0.65);
+  color: var(--color-text-secondary);
   font-size: var(--text-sm);
   font-weight: 500;
   text-decoration: none;
-  transition: all var(--transition-fast);
+  transition: color var(--transition-fast), background var(--transition-fast), border-color var(--transition-fast), transform var(--transition-spring);
   border-left: 3px solid transparent;
+  transform-origin: left center;
 }
 
 .admin-nav-item:hover {
-  color: white;
+  color: var(--color-text);
   background: rgba(255, 255, 255, 0.05);
-  border-left-color: var(--color-secondary);
+  border-left-color: var(--color-accent);
 }
 
 .admin-nav-item.active {
-  color: white;
-  background: rgba(212, 168, 67, 0.1);
-  border-left-color: var(--color-secondary);
+  color: var(--color-text);
+  background: rgba(34, 197, 94, 0.1);
+  border-left-color: var(--color-accent);
+}
+
+.admin-nav-item:active {
+  transform: scale(0.97);
 }
 
 .admin-nav-item svg {
@@ -660,8 +706,9 @@ img {
 
 .admin-header {
   height: var(--header-height);
-  background: var(--color-bg-card);
-  border-bottom: 1px solid var(--color-border-light);
+  background: var(--admin-glass-bg);
+  backdrop-filter: var(--admin-glass-blur);
+  border-bottom: var(--admin-glass-border);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -683,15 +730,20 @@ img {
 
 /* ---- Stat Cards ---- */
 .stat-card {
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border-light);
+  background: var(--admin-glass-bg);
+  backdrop-filter: var(--admin-glass-blur);
+  border: var(--admin-glass-border);
   border-radius: var(--radius-lg);
   padding: var(--space-6);
-  transition: all var(--transition-base);
+  transition: all var(--transition-spring);
+  box-shadow: var(--shadow-ambient);
 }
 .stat-card:hover {
-  box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
+  transform: translateY(-2px) scale(1.01);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+.stat-card:active {
+  transform: scale(0.97);
 }
 .stat-card-label {
   font-size: var(--text-sm);

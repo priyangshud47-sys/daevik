@@ -209,11 +209,24 @@ export default function AdminLayout({
               </button>
               
               {notificationsOpen && (
-                <div className="card" style={{ position: 'absolute', right: 0, top: '100%', marginTop: '8px', width: '300px', zIndex: 50, padding: 'var(--space-3)' }}>
-                  <h4 className="text-sm font-bold mb-2">Notifications</h4>
-                  <div className="text-xs text-muted mb-2">New order #1024 placed</div>
-                  <div className="text-xs text-muted mb-2">Payment gateway error</div>
-                  <button className="btn btn-sm btn-ghost w-full text-xs">Mark all read</button>
+                <div className="card-outer animate-fade-in-up" style={{ position: 'absolute', right: 0, top: '100%', marginTop: '8px', width: '300px', zIndex: 50, transformOrigin: 'top right' }}>
+                  <div className="card-inner" style={{ padding: 'var(--space-4)' }}>
+                    <h4 className="text-sm font-bold mb-3 eyebrow" style={{ marginBottom: 'var(--space-4)' }}>Notifications</h4>
+                    <div className="text-sm text-muted mb-3" style={{ padding: 'var(--space-2)', background: 'var(--color-bg-warm)', borderRadius: 'var(--radius-sm)' }}>
+                      <strong style={{ color: 'var(--color-primary)' }}>New order #1024</strong> placed
+                    </div>
+                    <div className="text-sm text-muted mb-4" style={{ padding: 'var(--space-2)', background: 'var(--color-error-bg)', color: 'var(--color-error)', borderRadius: 'var(--radius-sm)' }}>
+                      Payment gateway error
+                    </div>
+                    <button className="btn btn-primary" style={{ width: '100%', fontSize: '14px', padding: '10px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                        <span>Mark all read</span>
+                        <span className="btn-nested-icon" style={{ width: '20px', height: '20px' }}>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        </span>
+                      </div>
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -235,19 +248,22 @@ export default function AdminLayout({
 
       {/* Global Search Modal */}
       {searchOpen && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', paddingTop: '10vh' }}>
-           <div className="card" style={{ width: '100%', maxWidth: '600px', margin: '0 20px', height: 'fit-content' }}>
-             <div className="flex justify-between items-center mb-4">
-                <input 
-                  type="text" 
-                  className="form-input w-full" 
-                  placeholder="Search orders, customers, projects... (Press Esc to close)"
-                  autoFocus
-                />
+        <div className="modal-overlay" onClick={() => setSearchOpen(false)}>
+           <div className="card-outer animate-fade-in-up" style={{ width: '100%', maxWidth: '600px', margin: '0 20px', height: 'fit-content' }} onClick={(e) => e.stopPropagation()}>
+             <div className="card-inner" style={{ padding: 'var(--space-6)' }}>
+               <div className="flex justify-between items-center mb-4">
+                  <input 
+                    type="text" 
+                    className="form-input w-full" 
+                    style={{ fontSize: '18px', padding: '16px', background: 'var(--color-bg-warm)', border: 'none' }}
+                    placeholder="Search orders, customers, projects... (Press Esc)"
+                    autoFocus
+                  />
+               </div>
+               <span className="eyebrow" style={{ marginTop: 'var(--space-4)' }}>Recent Searches</span>
+               <div className="mt-3 text-sm cursor-pointer admin-nav-item" onClick={() => { setSearchOpen(false); router.push('/admin/orders'); }}>Order #1234</div>
+               <div className="mt-1 text-sm cursor-pointer admin-nav-item" onClick={() => { setSearchOpen(false); router.push('/admin/projects'); }}>Zero Investment Guide</div>
              </div>
-             <div className="text-xs text-muted">Recent Searches</div>
-             <div className="mt-2 text-sm cursor-pointer hover:text-gold" onClick={() => { setSearchOpen(false); router.push('/admin/orders'); }}>Order #1234</div>
-             <div className="mt-2 text-sm cursor-pointer hover:text-gold" onClick={() => { setSearchOpen(false); router.push('/admin/projects'); }}>Zero Investment Guide</div>
            </div>
         </div>
       )}
