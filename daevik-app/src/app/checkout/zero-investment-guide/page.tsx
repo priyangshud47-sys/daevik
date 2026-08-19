@@ -230,6 +230,9 @@ function CheckoutContent() {
         case 'pp':
           window.location.href = data.approveUrl;
           break;
+        case 'cashfree':
+          await handleCashfreeCheckout(data);
+          break;
         default:
           throw new Error('Unsupported payment gateway');
       }
@@ -237,6 +240,37 @@ function CheckoutContent() {
       setError(err instanceof Error ? err.message : 'Something went wrong');
       setSubmitting(false);
     }
+  };
+
+  const handleCashfreeCheckout = async (data: {
+    paymentSessionId: string;
+    mode: string;
+    orderId: string;
+  }) => {
+    const script = document.createElement('script');
+    script.src = 'https://sdk.cashfree.com/js/v3/cashfree.js';
+    script.async = true;
+    document.body.appendChild(script);
+
+    script.onload = async () => {
+      const cf = await (window as unknown as any).Cashfree({
+        mode: data.mode === 'live' ? 'production' : 'sandbox',
+      });
+
+      const checkoutOptions = {
+        paymentSessionId: data.paymentSessionId,
+        redirectTarget: '_modal',
+      };
+
+      cf.checkout(checkoutOptions).then((result: any) => {
+        if (result.error) {
+          setSubmitting(false);
+        }
+        if (result.paymentDetails) {
+          window.location.href = `/thank-you/zero-investment-guide?orderId=${data.orderId}`;
+        }
+      });
+    };
   };
 
   const handleRazorpayCheckout = async (data: {
