@@ -601,7 +601,7 @@ function CheckoutContent() {
 function CheckoutStyles() {
   return (
     <style dangerouslySetInnerHTML={{ __html: `
-      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap');
 
       /* ====== VARIABLES ====== */
       :root {
@@ -632,7 +632,7 @@ function CheckoutStyles() {
       /* ====== RESET ====== */
       .zig-checkout-page * { box-sizing: border-box; margin: 0; padding: 0; }
       .zig-checkout-page {
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
         background: var(--zig-bg);
         color: var(--zig-text);
         min-height: 100vh;
@@ -982,7 +982,7 @@ function CheckoutStyles() {
         width: 100%;
         padding: 12px 14px;
         font-size: 0.95rem;
-        font-family: 'Inter', sans-serif;
+        font-family: 'Outfit', sans-serif;
         border: 1.5px solid var(--zig-border);
         border-radius: 10px;
         background: var(--zig-white);
@@ -1026,7 +1026,7 @@ function CheckoutStyles() {
         background: transparent;
         padding: 12px 14px 12px 0;
         font-size: 0.95rem;
-        font-family: 'Inter', sans-serif;
+        font-family: 'Outfit', sans-serif;
         color: var(--zig-text);
         outline: none;
       }
@@ -1070,7 +1070,7 @@ function CheckoutStyles() {
         padding: 16px 24px;
         font-size: 1.05rem;
         font-weight: 700;
-        font-family: 'Inter', sans-serif;
+        font-family: 'Outfit', sans-serif;
         letter-spacing: 0.02em;
         color: white;
         background: var(--zig-emerald);
