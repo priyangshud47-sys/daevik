@@ -530,18 +530,19 @@ function CheckoutContent() {
                     </div>
                   </div>
 
-                  <button
-                    type="submit"
-                    className="zig-pay-btn"
-                    disabled={submitting}
-                  >
+                  <button type="submit" className="zig-pay-btn" disabled={submitting}>
                     {submitting ? (
                       <span className="zig-btn-loading">
-                        <span className="zig-spinner-small" />
-                        Processing...
+                        <span className="zig-spinner" style={{ borderColor: 'rgba(255,255,255,0.3)', borderTopColor: 'white' }}></span>
+                        Initializing...
                       </span>
                     ) : (
-                      <>🚀 PAY ₹149 — GET INSTANT ACCESS</>
+                      <>
+                        <span>Complete Purchase</span>
+                        <span className="zig-nested-icon">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                        </span>
+                      </>
                     )}
                   </button>
 
@@ -1063,10 +1064,10 @@ function CheckoutStyles() {
         color: var(--zig-emerald);
       }
 
-      /* Pay Button */
+      /* Pay Button (High-End Aesthetic) */
       .zig-pay-btn {
         width: 100%;
-        padding: 16px;
+        padding: 16px 24px;
         font-size: 1.05rem;
         font-weight: 700;
         font-family: 'Inter', sans-serif;
@@ -1074,24 +1075,38 @@ function CheckoutStyles() {
         color: white;
         background: var(--zig-emerald);
         border: none;
-        border-radius: 10px;
+        border-radius: 9999px; /* Pill shape */
         cursor: pointer;
-        transition: all 0.25s ease;
+        transition: transform 160ms cubic-bezier(0.23, 1, 0.32, 1), background 250ms cubic-bezier(0.23, 1, 0.32, 1), box-shadow 250ms cubic-bezier(0.23, 1, 0.32, 1);
         box-shadow: 0 4px 14px rgba(22, 163, 74, 0.35);
-        animation: zig-pulse 2.5s infinite;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
       }
       .zig-pay-btn:hover:not(:disabled) {
         background: var(--zig-emerald-hover);
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(22, 163, 74, 0.45);
       }
       .zig-pay-btn:active:not(:disabled) {
-        transform: translateY(0);
+        transform: scale(0.97); /* Physical squish */
       }
       .zig-pay-btn:disabled {
         opacity: 0.7;
         cursor: not-allowed;
-        animation: none;
+      }
+      .zig-nested-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        border-radius: 9999px;
+        background: rgba(255, 255, 255, 0.15);
+        margin-left: 8px;
+        margin-right: -12px;
+        transition: transform 250ms cubic-bezier(0.23, 1, 0.32, 1);
+      }
+      .zig-pay-btn:hover .zig-nested-icon {
+        transform: translate(2px, -1px) scale(1.05); /* Internal kinetic tension */
       }
 
       @keyframes zig-pulse {

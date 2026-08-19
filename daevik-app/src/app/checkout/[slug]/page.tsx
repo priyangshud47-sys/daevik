@@ -366,20 +366,24 @@ export default function CheckoutPage() {
     <div className="checkout-layout">
       <div className="checkout-container" style={{ maxWidth: product.checkout_page_html ? '1000px' : '480px' }}>
         {/* Header */}
-        <div className="checkout-header">
+        <div className="checkout-header" style={{ marginBottom: 'var(--space-12)' }}>
           <a href="/" className="site-logo">
             Dae<span style={{ color: 'var(--color-secondary)' }}>vik</span>
           </a>
           <p className="text-sm text-muted" style={{ marginTop: 'var(--space-2)' }}>Secure Checkout</p>
         </div>
 
-        <div style={{ display: 'flex', gap: 'var(--space-8)', flexDirection: 'row', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 'var(--space-12)', flexDirection: 'row', alignItems: 'flex-start', flexWrap: 'wrap' }}>
           {product.checkout_page_html && (
-            <div className="checkout-custom-html animate-fade-in-up" style={{ flex: '1 1 400px' }} dangerouslySetInnerHTML={{ __html: product.checkout_page_html }} />
+            <div className="checkout-custom-html animate-fade-in-up" style={{ flex: '1 1 400px' }}>
+              <span className="eyebrow">Product Details</span>
+              <div dangerouslySetInnerHTML={{ __html: product.checkout_page_html }} />
+            </div>
           )}
           
-          {/* Checkout Card */}
-          <div className="checkout-card animate-fade-in-up" style={{ flex: product.checkout_page_html ? '0 0 400px' : '1 1 100%' }}>
+          {/* Checkout Card (Double-Bezel Architecture) */}
+          <div className="card checkout-card animate-fade-in-up" style={{ flex: product.checkout_page_html ? '0 0 440px' : '1 1 100%' }}>
+            <div className="card-inner">
           {/* Product Summary */}
           <div className="checkout-product-summary">
             <div style={{
@@ -498,56 +502,166 @@ export default function CheckoutPage() {
               }} className="flex justify-between">
                 <span className="font-semibold">Total</span>
                 <span className="font-bold text-primary" style={{ fontSize: 'var(--text-lg)' }}>
-                  ₹{product.price.toLocaleString('en-IN')}
-                </span>
+          <div className="card-outer">
+            <div className="card checkout-card animate-fade-in-up" style={{ flex: product.checkout_page_html ? '0 0 440px' : '1 1 100%' }}>
+              <div className="card-inner">
+                <span className="eyebrow">Complete Purchase</span>
+                {/* Product Summary */}
+                <div className="checkout-product-summary">
+                  <div style={{
+                    width: '64px',
+                    height: '64px',
+                    borderRadius: 'var(--radius-md)',
+                    background: 'var(--color-bg-warm)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                    overflow: 'hidden',
+                  }}>
+                    {product.thumbnail_url ? (
+                      <img src={product.thumbnail_url} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ color: 'var(--color-text-muted)' }}>
+                        <path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                      </svg>
+                    )}
+                  </div>
+                  <div className="checkout-product-info">
+                    <h3>{product.name}</h3>
+                    <div className="checkout-product-price">
+                      ₹{product.price.toLocaleString('en-IN')}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Error */}
+                {error && (
+                  <div style={{
+                    background: 'var(--color-error-bg)',
+                    color: 'var(--color-error)',
+                    padding: 'var(--space-3) var(--space-4)',
+                    borderRadius: 'var(--radius-md)',
+                    fontSize: 'var(--text-sm)',
+                    marginBottom: 'var(--space-4)',
+                    fontWeight: 500,
+                  }}>
+                    {error}
+                  </div>
+                )}
+
+                {/* Form */}
+                <form className="checkout-form" onSubmit={handleSubmit}>
+                  <div className="form-group">
+                    <label htmlFor="checkout-name" className="form-label">Full Name</label>
+                    <input
+                      id="checkout-name"
+                      name="name"
+                      type="text"
+                      className="form-input"
+                      placeholder="Your full name"
+                      required
+                      autoComplete="name"
+                      value={formData.name}
+                      onChange={(e) => handleInputChange('name', e.target.value)}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="checkout-email" className="form-label">Email Address</label>
+                    <input
+                      id="checkout-email"
+                      name="email"
+                      type="email"
+                      className="form-input"
+                      placeholder="your@email.com"
+                      required
+                      autoComplete="email"
+                      value={formData.email}
+                      onChange={(e) => handleInputChange('email', e.target.value)}
+                    />
+                    <span className="form-hint">Your product will be delivered to this email</span>
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="checkout-phone" className="form-label">
+                      Phone Number
+                    </label>
+                    <PhoneInput
+                      key={country}
+                      id="checkout-phone"
+                      name="tel"
+                      placeholder="Enter phone number"
+                      defaultCountry={country}
+                      value={formData.phone}
+                      onChange={(val) => {
+                        let newValue = val || '';
+                        if (country === 'IN' && newValue.startsWith('+91') && newValue.length > 13) {
+                          newValue = newValue.slice(0, 13);
+                        }
+                        handleInputChange('phone', newValue);
+                      }}
+                      required
+                      limitMaxLength={true}
+                      international={true}
+                      countryCallingCodeEditable={false}
+                    />
+                  </div>
+
+                  {/* Price Breakdown */}
+                  <div style={{
+                    background: 'var(--color-bg-warm)',
+                    borderRadius: 'var(--radius-md)',
+                    padding: 'var(--space-4)',
+                    marginBottom: 'var(--space-6)'
+                  }}>
+                    <div className="flex justify-between" style={{ marginBottom: 'var(--space-2)' }}>
+                      <span className="text-sm text-secondary">Product</span>
+                      <span className="text-sm font-semibold">₹{product.price.toLocaleString('en-IN')}</span>
+                    </div>
+                    <div style={{
+                      borderTop: '1px solid var(--color-border)',
+                      paddingTop: 'var(--space-2)',
+                    }} className="flex justify-between">
+                      <span className="font-semibold">Total</span>
+                      <span className="font-bold text-primary" style={{ fontSize: 'var(--text-lg)' }}>
+                        ₹{product.price.toLocaleString('en-IN')}
+                      </span>
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="btn btn-primary"
+                    style={{ width: '100%', padding: '16px 24px', fontSize: '16px' }}
+                  >
+                    {submitting ? (
+                      <>
+                        <span className="spinner"></span> Processing...
+                      </>
+                    ) : (
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                        <span>Pay ₹{product.price.toLocaleString('en-IN')} Now</span>
+                        <span className="btn-nested-icon">
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                        </span>
+                      </div>
+                    )}
+                  </button>
+                  
+                  {/* Secure Badge */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'var(--space-2)', marginTop: 'var(--space-6)', color: 'var(--color-text-muted)', fontSize: 'var(--text-xs)' }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    Guaranteed safe & secure checkout
+                  </div>
+                </form>
               </div>
             </div>
-
-            <button
-              type="submit"
-              className="btn btn-primary btn-lg"
-              disabled={submitting}
-              style={{ width: '100%' }}
-            >
-              {submitting ? (
-                <>
-                  <span className="spinner" style={{ borderTopColor: 'white', width: '16px', height: '16px' }}></span>
-                  Processing...
-                </>
-              ) : (
-                <>
-                  Pay ₹{product.price.toLocaleString('en-IN')}
-                </>
-              )}
-            </button>
-          </form>
-
-          {/* Trust Badges */}
-          <div className="checkout-trust">
-            <span className="trust-badge">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-              </svg>
-              Secure Payment
-            </span>
-            <span className="trust-badge">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
-                <polyline points="22 4 12 14.01 9 11.01" />
-              </svg>
-              Instant Delivery
-            </span>
-            <span className="trust-badge">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
-                <line x1="1" y1="10" x2="23" y2="10" />
-              </svg>
-              Encrypted
-            </span>
-          </div>
           </div>
         </div>
       </div>
+      <StyleBlock />
     </div>
   );
 }

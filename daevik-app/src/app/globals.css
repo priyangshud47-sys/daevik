@@ -84,20 +84,21 @@
   --space-20: 5rem;
 
   /* Border Radius */
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
-  --radius-2xl: 24px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-2xl: 32px;
+  --radius-3xl: 40px;
   --radius-full: 9999px;
 
-  /* Shadows */
-  --shadow-sm: 0 1px 2px rgba(45, 31, 20, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(45, 31, 20, 0.07), 0 2px 4px -1px rgba(45, 31, 20, 0.04);
-  --shadow-lg: 0 10px 15px -3px rgba(45, 31, 20, 0.08), 0 4px 6px -2px rgba(45, 31, 20, 0.04);
-  --shadow-xl: 0 20px 25px -5px rgba(45, 31, 20, 0.1), 0 10px 10px -5px rgba(45, 31, 20, 0.04);
-  --shadow-glow: 0 0 20px rgba(212, 168, 67, 0.2);
-
+  /* Ambient Diffused Shadows (High-End Aesthetic) */
+  --shadow-sm: 0 4px 24px -4px rgba(45, 31, 20, 0.02);
+  --shadow-md: 0 8px 32px -4px rgba(45, 31, 20, 0.04);
+  --shadow-lg: 0 16px 48px -8px rgba(45, 31, 20, 0.06);
+  --shadow-xl: 0 24px 64px -12px rgba(45, 31, 20, 0.08);
+  --shadow-glow: 0 0 40px rgba(212, 168, 67, 0.15);
+  --shadow-inner-light: inset 0 1px 1px rgba(255, 255, 255, 0.7);
   /* Transitions (Emil Kowalski Design Eng) */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
@@ -175,8 +176,8 @@ img {
   font-size: var(--text-sm);
   font-weight: 600;
   line-height: 1.4;
-  border: 2px solid transparent;
-  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  border-radius: var(--radius-full);
   cursor: pointer;
   transition: transform var(--transition-fast), background var(--transition-base), border-color var(--transition-base), color var(--transition-base), box-shadow var(--transition-base);
   text-decoration: none;
@@ -261,6 +262,26 @@ img {
   height: 36px;
 }
 
+/* Button-in-Button Nested Architecture */
+.btn-nested-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  background: rgba(0, 0, 0, 0.1);
+  margin-left: var(--space-2);
+  margin-right: -12px; /* Pull flush right against the button padding */
+  transition: transform var(--transition-base);
+}
+.btn-primary .btn-nested-icon {
+  background: rgba(255, 255, 255, 0.15);
+}
+.btn:hover .btn-nested-icon {
+  transform: translate(2px, -1px) scale(1.05);
+}
+
 /* ---- Form Elements ---- */
 .form-group {
   display: flex;
@@ -316,21 +337,29 @@ img {
   color: var(--color-text-muted);
 }
 
-/* ---- Cards ---- */
+/* ---- Cards (Double-Bezel Architecture) ---- */
 .card {
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border-light);
-  border-radius: var(--radius-lg);
-  padding: var(--space-6);
+  background: rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  border-radius: var(--radius-2xl); /* Massive outer radius */
+  padding: 6px; /* Precise padding for nested concentricity */
   box-shadow: var(--shadow-sm);
-  transition: all var(--transition-base);
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
 }
 .card:hover {
   box-shadow: var(--shadow-md);
 }
 
+.card-inner {
+  background: var(--color-bg-card);
+  border-radius: calc(var(--radius-2xl) - 6px); /* Concentric mathematical radius */
+  padding: var(--space-6);
+  box-shadow: var(--shadow-inner-light);
+  height: 100%;
+}
+
 .card-elevated {
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-xl);
 }
 
 /* ---- Tables ---- */
@@ -524,6 +553,21 @@ img {
 .font-heading { font-family: var(--font-heading); }
 .font-semibold { font-weight: 600; }
 .font-bold { font-weight: 700; }
+
+/* ---- High-End Typography Elements ---- */
+.eyebrow {
+  display: inline-block;
+  padding: 4px 12px;
+  background: var(--color-bg-warm);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-4);
+}
 
 /* ---- Admin Layout ---- */
 .admin-layout {
