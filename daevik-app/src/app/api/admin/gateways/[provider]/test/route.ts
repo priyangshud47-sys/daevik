@@ -13,7 +13,7 @@ export async function POST(
   const { provider } = resolvedParams;
 
   const { data, error } = await supabase
-    .from('payment_gateways')
+    .from('gateway_configs')
     .select('*')
     .eq('provider', provider)
     .single();
