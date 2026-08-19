@@ -4,10 +4,26 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 
+function isValidUUID(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+}
+
 function ConfirmationContent() {
   const searchParams = useSearchParams();
-  const orderId = searchParams.get('orderId');
+  const rawOrderId = searchParams.get('orderId');
   const productSlug = searchParams.get('productSlug');
+
+  // Validate orderId is a real UUID — reject anything else (prevents XSS injection)
+  const orderId = rawOrderId && isValidUUID(rawOrderId) ? rawOrderId : null;
 
   const [customHtml, setCustomHtml] = useState<string | null>(null);
   const [loading, setLoading] = useState(!!productSlug);
@@ -20,7 +36,8 @@ function ConfirmationContent() {
           if (data && data.thank_you_page_html) {
             let html = data.thank_you_page_html;
             if (orderId) {
-              html = html.replace(/{{order_id}}/g, orderId);
+              // HTML-encode orderId before injecting into template to prevent XSS
+              html = html.replace(/{{order_id}}/g, escapeHtml(orderId));
             }
             setCustomHtml(html);
           }
