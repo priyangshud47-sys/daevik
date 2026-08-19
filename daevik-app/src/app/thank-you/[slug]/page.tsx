@@ -34,11 +34,46 @@ export default async function ThankYouPage({
   }
 
   // 1. Fetch the order and verify payment and product match
-  const { data: order } = await supabase
+  let { data: order } = await supabase
     .from('orders')
     .select('*, customer:customers(*), product:products(*)')
     .eq('id', orderId)
     .single();
+
+  // Synchronous Verification Fallback for Cashfree
+  if (order && order.payment_status === 'pending' && order.gateway_used === 'cashfree') {
+    const { data: config } = await supabase
+      .from('gateway_configs')
+      .select('api_key, api_secret, extra_config')
+      .eq('provider', 'cashfree')
+      .single();
+      
+    if (config && config.api_key && config.api_secret) {
+      const mode = (config.extra_config as Record<string, string>)?.mode || 'test';
+      const baseUrl = mode === 'live' ? 'https://api.cashfree.com/pg' : 'https://sandbox.cashfree.com/pg';
+      try {
+        const res = await fetch(`${baseUrl}/orders/${order.id}`, {
+          headers: {
+            'x-client-id': config.api_key,
+            'x-client-secret': config.api_secret,
+            'x-api-version': '2023-08-01'
+          }
+        });
+        if (res.ok) {
+          const cfData = await res.json();
+          if (cfData.order_status === 'PAID') {
+            await supabase.from('orders').update({
+              payment_status: 'completed',
+              gateway_order_id: cfData.cf_order_id ? cfData.cf_order_id.toString() : order.gateway_order_id
+            }).eq('id', order.id);
+            order.payment_status = 'completed';
+          }
+        }
+      } catch(e) {
+        console.error('Failed synchronous Cashfree verification:', e);
+      }
+    }
+  }
 
   if (!order || order.payment_status !== 'completed' || !order.product || order.product.slug !== slug) {
     return (
