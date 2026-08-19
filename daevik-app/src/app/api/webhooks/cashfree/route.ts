@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { verifyCashfreeSignature } from '@/lib/payments/cashfree';
+import { sendProductDeliveryEmail } from '@/lib/email';
 
 export async function POST(request: NextRequest) {
   try {
@@ -64,26 +65,22 @@ export async function POST(request: NextRequest) {
           })
           .eq('id', orderId);
 
-        // Send email (we make an internal request to our email API)
+        // Send email directly
         const host = request.headers.get('host');
         const protocol = request.headers.get('x-forwarded-proto') || 'https';
         const appUrl = process.env.NEXT_PUBLIC_APP_URL || `${protocol}://${host}`;
         
         try {
-          await fetch(`${appUrl}/api/email/send`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              customerName: order.customer.name,
-              customerEmail: order.customer.email,
-              productName: order.product.name,
-              productPrice: `₹${order.amount}`,
-              downloadLink: `${appUrl}/thank-you/${order.product.slug}?orderId=${order.id}`,
-              orderId: order.id,
-            })
+          await sendProductDeliveryEmail({
+            customerName: order.customer.name,
+            customerEmail: order.customer.email,
+            productName: order.product.name,
+            productPrice: `₹${order.amount}`,
+            downloadLink: `${appUrl}/thank-you/${order.product.slug}?orderId=${order.id}`,
+            orderId: order.id,
           });
         } catch (emailErr) {
-          console.error('Failed to trigger email API from webhook', emailErr);
+          console.error('Failed to trigger email from webhook', emailErr);
         }
       }
     }
