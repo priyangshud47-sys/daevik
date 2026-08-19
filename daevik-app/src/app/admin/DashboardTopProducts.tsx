@@ -51,10 +51,11 @@ export default async function DashboardTopProducts({
     .slice(0, 5);
 
   return (
-    <div className="card">
-      <h3 style={{ marginBottom: 'var(--space-6)', fontSize: 'var(--text-lg)' }}>
-        Top Products
-      </h3>
+    <div className="card-outer">
+      <div className="card-inner" style={{ padding: 'var(--space-6)' }}>
+        <h3 style={{ marginBottom: 'var(--space-6)', fontSize: 'var(--text-lg)' }}>
+          Top Products
+        </h3>
       {topProducts.length > 0 ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
           {topProducts.map((p, i) => (
@@ -88,6 +89,7 @@ export default async function DashboardTopProducts({
           <p>No products sold in this period.</p>
         </div>
       )}
+      </div>
     </div>
   );
 }

@@ -15,7 +15,8 @@ export default function DashboardChart({ data }: { data: ChartData[] }) {
   const maxOrders = Math.max(...data.map(d => d.count), 1);
 
   return (
-    <div className="card" style={{ gridColumn: 'span 2' }}>
+    <div className="card-outer" style={{ gridColumn: 'span 2' }}>
+      <div className="card-inner" style={{ padding: 'var(--space-6)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-6)' }}>
         <h3 style={{ fontSize: 'var(--text-lg)', margin: 0 }}>
           Sales — Last 7 Days
@@ -37,7 +38,7 @@ export default function DashboardChart({ data }: { data: ChartData[] }) {
           </button>
         </div>
       </div>
-      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 'var(--space-2)', height: '200px' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 'var(--space-2)', height: '220px', marginTop: 'var(--space-10)' }}>
         {data.map((day, i) => {
           const height = view === 'revenue' 
             ? Math.max((day.revenue / maxRevenue) * 160, 4)
@@ -47,11 +48,11 @@ export default function DashboardChart({ data }: { data: ChartData[] }) {
             <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'var(--space-2)' }}>
               <div 
                 style={{ position: 'relative', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', height: '160px', justifyContent: 'flex-end' }}
-                className="group"
+                className="chart-bar-group"
               >
                 {/* Tooltip */}
                 <div 
-                  className="opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="chart-tooltip"
                   style={{
                     position: 'absolute',
                     bottom: '100%',
@@ -102,5 +103,6 @@ export default function DashboardChart({ data }: { data: ChartData[] }) {
         })}
       </div>
     </div>
+  </div>
   );
 }

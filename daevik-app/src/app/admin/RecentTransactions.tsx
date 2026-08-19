@@ -17,15 +17,16 @@ export default function RecentTransactions({ orders, rangeLabel }: { orders: Ord
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   return (
-    <div className="card">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-4)' }}>
-        <h3 style={{ fontSize: 'var(--text-lg)', margin: 0 }}>
-          {rangeLabel === 'Lifetime' ? 'All Transactions' : 'Recent Transactions'}
-        </h3>
-        <a href="/admin/orders" className="text-sm font-semibold" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>
-          View All &rarr;
-        </a>
-      </div>
+    <div className="card-outer">
+      <div className="card-inner" style={{ padding: 'var(--space-6)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-4)' }}>
+          <h3 style={{ fontSize: 'var(--text-lg)', margin: 0 }}>
+            {rangeLabel === 'Lifetime' ? 'All Transactions' : 'Recent Transactions'}
+          </h3>
+          <a href="/admin/orders" className="text-sm font-semibold" style={{ color: 'var(--color-primary)', textDecoration: 'none' }}>
+            View All &rarr;
+          </a>
+        </div>
       
       {orders.length > 0 ? (
         <div className="table-container" style={{ border: 'none' }}>
@@ -175,6 +176,7 @@ export default function RecentTransactions({ orders, rangeLabel }: { orders: Ord
           </div>
         </>
       )}
+      </div>
     </div>
   );
 }

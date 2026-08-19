@@ -716,7 +716,19 @@ img {
   padding: var(--space-8);
 }
 
-/* ---- Stat Cards ---- */
+/* ---- Stat Cards & Bezel Cards ---- */
+.card-outer {
+  background: linear-gradient(180deg, var(--color-border-light) 0%, rgba(255, 255, 255, 0) 100%);
+  padding: 1px;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-ambient);
+}
+.card-inner {
+  background: var(--color-bg-card);
+  border-radius: calc(var(--radius-xl) - 1px);
+  height: 100%;
+}
+
 .stat-card {
   background: var(--admin-glass-bg);
   backdrop-filter: var(--admin-glass-blur);
@@ -1190,6 +1202,15 @@ img {
 
 .animate-fade-in-up {
   animation: fadeInUp 0.5s ease-out;
+}
+
+/* ---- Chart Tooltips ---- */
+.chart-bar-group .chart-tooltip {
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+.chart-bar-group:hover .chart-tooltip {
+  opacity: 1;
 }
 
 /* ---- Site Footer ---- */
