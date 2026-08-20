@@ -24,10 +24,10 @@ const getPixelId = unstable_cache(
         .select('pixel_id')
         .eq('active', true)
         .single();
-      return data?.pixel_id || null;
+      return data?.pixel_id || process.env.NEXT_PUBLIC_META_PIXEL_ID || null;
     } catch (error) {
-      console.error('Failed to load FB Pixel ID', error);
-      return null;
+      console.error('Failed to load FB Pixel ID from DB, using fallback');
+      return process.env.NEXT_PUBLIC_META_PIXEL_ID || null;
     }
   },
   ['fb-pixel-id'],
