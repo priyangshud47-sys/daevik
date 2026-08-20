@@ -12,7 +12,7 @@ export async function GET() {
       .single();
 
     return NextResponse.json({
-      pixelId: config?.pixel_id || null,
+      pixelId: config?.pixel_id || process.env.NEXT_PUBLIC_META_PIXEL_ID || null,
     });
   } catch (error) {
     return NextResponse.json({ pixelId: null }, { status: 500 });
