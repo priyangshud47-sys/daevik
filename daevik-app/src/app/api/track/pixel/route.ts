@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 
-export const dynamic = 'force-dynamic';
+// Cache API response for 1 hour to prevent DB DDOS, but can be manually revalidated
+export const revalidate = 3600;
 
 export async function GET() {
   try {
@@ -15,6 +16,6 @@ export async function GET() {
       pixelId: config?.pixel_id || process.env.NEXT_PUBLIC_META_PIXEL_ID || null,
     });
   } catch (error) {
-    return NextResponse.json({ pixelId: null }, { status: 500 });
+    return NextResponse.json({ pixelId: process.env.NEXT_PUBLIC_META_PIXEL_ID || null }, { status: 500 });
   }
 }

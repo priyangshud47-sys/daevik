@@ -53,6 +53,7 @@ export async function POST(request: NextRequest) {
     }
 
     revalidatePath('/', 'layout');
+    revalidatePath('/api/track/pixel');
     return NextResponse.json(data, { status: 201 });
   } catch (error) {
     return NextResponse.json(
@@ -96,6 +97,7 @@ export async function PUT(request: NextRequest) {
     }
 
     revalidatePath('/', 'layout');
+    revalidatePath('/api/track/pixel');
     return NextResponse.json(data);
   } catch (error) {
     return NextResponse.json(
@@ -130,6 +132,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     revalidatePath('/', 'layout');
+    revalidatePath('/api/track/pixel');
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json(

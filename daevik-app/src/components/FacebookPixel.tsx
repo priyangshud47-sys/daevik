@@ -46,6 +46,13 @@ export default function FacebookPixel() {
 
   if (!pixelId) return null;
 
+  // Security Verification: Meta Pixel IDs strictly contain only numbers.
+  // This Regex completely neutralizes any potential XSS payload injected via the database.
+  if (!/^\d+$/.test(pixelId)) {
+    console.error('Security Alert: Invalid Meta Pixel ID format detected. Injection blocked.');
+    return null;
+  }
+
   return (
     <>
       <Script
