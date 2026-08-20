@@ -1,7 +1,7 @@
 // Admin Facebook CAPI Config API
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import { revalidateTag } from 'next/cache';
+import { revalidatePath } from 'next/cache';
 
 import { supabase } from '@/lib/supabase';
 
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
-    revalidateTag('fb-pixel-id');
+    revalidatePath('/', 'layout');
     return NextResponse.json(data, { status: 201 });
   } catch (error) {
     return NextResponse.json(
@@ -95,7 +95,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
-    revalidateTag('fb-pixel-id');
+    revalidatePath('/', 'layout');
     return NextResponse.json(data);
   } catch (error) {
     return NextResponse.json(
@@ -129,7 +129,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
-    revalidateTag('fb-pixel-id');
+    revalidatePath('/', 'layout');
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json(
