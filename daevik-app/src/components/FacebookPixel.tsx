@@ -2,7 +2,7 @@
 
 import { usePathname, useSearchParams } from 'next/navigation';
 import Script from 'next/script';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 
 // Declare fbq for TypeScript
 declare global {
@@ -12,21 +12,9 @@ declare global {
   }
 }
 
-export default function FacebookPixel() {
-  const [pixelId, setPixelId] = useState<string | null>(null);
+export default function FacebookPixel({ pixelId }: { pixelId: string | null }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-
-  useEffect(() => {
-    fetch('/api/track/pixel')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.pixelId) {
-          setPixelId(data.pixelId);
-        }
-      })
-      .catch((err) => console.error('Failed to load FB Pixel ID', err));
-  }, []);
 
   useEffect(() => {
     if (!pixelId) return;
