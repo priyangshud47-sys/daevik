@@ -30,18 +30,32 @@ export default function FacebookPixel() {
       .catch((err) => console.error('Error fetching pixel', err));
   }, []);
 
-  // 2. Track Route Changes
+  // 2. Track Route Changes (SPA navigation)
+  const isFirstRender = useRef(true);
   useEffect(() => {
     if (!pixelId) return;
     
-    // Facebook Pixel helper detects PageView on every route
-    if (typeof window !== 'undefined' && window.fbq) {
-      // Prevent double firing on the initial render since the snippet itself fires PageView
-      if (routeChangeTracked.current === pathname + searchParams.toString()) return;
+    // Skip the very first render — the inline <Script> already fires PageView on load
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
       routeChangeTracked.current = pathname + searchParams.toString();
-      
-      window.fbq('track', 'PageView');
+      return;
     }
+
+    // Prevent double firing for the same route
+    const currentRoute = pathname + searchParams.toString();
+    if (routeChangeTracked.current === currentRoute) return;
+    routeChangeTracked.current = currentRoute;
+
+    // Wait for fbq to be available before tracking
+    const tryTrack = () => {
+      if (typeof window !== 'undefined' && window.fbq && typeof window.fbq === 'function') {
+        window.fbq('track', 'PageView');
+      } else {
+        setTimeout(tryTrack, 300);
+      }
+    };
+    tryTrack();
   }, [pathname, searchParams, pixelId]);
 
   if (!pixelId) return null;

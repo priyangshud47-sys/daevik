@@ -2,7 +2,7 @@ export const trackFbEvent = (eventName: string, params?: Record<string, unknown>
   if (typeof window === 'undefined') return;
   let attempts = 0;
   const tryTrack = () => {
-    if (window.fbq && typeof window.fbq === 'function' && (window.fbq as unknown as { loaded?: boolean }).loaded) {
+    if (window.fbq && typeof window.fbq === 'function') {
       if (options) {
         window.fbq('track', eventName, params, options);
       } else {
@@ -10,7 +10,7 @@ export const trackFbEvent = (eventName: string, params?: Record<string, unknown>
       }
     } else {
       attempts++;
-      if (attempts < 20) { // Try for up to 10 seconds (20 * 500ms)
+      if (attempts < 40) { // Try for up to 20 seconds (40 * 500ms) to account for API fetch + script load
         setTimeout(tryTrack, 500);
       } else {
         console.warn('Facebook Pixel never loaded, giving up on tracking', eventName);
