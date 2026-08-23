@@ -57,24 +57,7 @@ export default function ProductsPage() {
 
 
 
-  const handleToggleStatus = async (product: Product) => {
-    const newStatus = product.status === 'live' ? 'draft' : 'live';
-    setSaving(true);
-    try {
-      const res = await fetch(`/api/admin/products/${product.slug}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus }),
-      });
-      if (!res.ok) throw new Error('Failed to update status');
-      showToast('Status updated', 'success');
-      fetchProducts();
-    } catch (e: any) {
-      showToast(e.message, 'error');
-    } finally {
-      setSaving(false);
-    }
-  };
+
 
   const handleDuplicate = async (product: Product) => {
     setSaving(true);
@@ -91,6 +74,7 @@ export default function ProductsPage() {
           product_file_url: product.product_file_url,
           image_url: product.image_url,
           tag: 'digital_file',
+          status: 'live',
         }),
       });
       if (!res.ok) throw new Error('Failed to duplicate');
@@ -103,7 +87,7 @@ export default function ProductsPage() {
     }
   };
 
-  const handleBulkAction = async (action: 'delete' | 'live' | 'draft') => {
+  const handleBulkAction = async (action: 'delete') => {
     if (selectedIds.size === 0) return;
     if (action === 'delete' && !confirm('Are you sure you want to delete selected products?')) return;
     
@@ -115,12 +99,6 @@ export default function ProductsPage() {
         if (!prod) continue;
         if (action === 'delete') {
           await fetch(`/api/admin/products/${prod.slug}`, { method: 'DELETE' });
-        } else {
-          await fetch(`/api/admin/products/${prod.slug}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status: action }),
-          });
         }
       }
       showToast('Bulk action completed', 'success');
@@ -213,6 +191,7 @@ export default function ProductsPage() {
           product_file_url: productFileUrl,
           image_url: productImageUrl,
           tag: 'digital_file',
+          status: 'live',
         }),
       });
 
@@ -380,8 +359,6 @@ export default function ProductsPage() {
         {selectedIds.size > 0 && (
           <div className="flex gap-2">
             <span className="text-sm self-center mr-2">{selectedIds.size} selected</span>
-            <button className="btn btn-sm btn-ghost" onClick={() => handleBulkAction('live')} disabled={saving}>Set Live</button>
-            <button className="btn btn-sm btn-ghost" onClick={() => handleBulkAction('draft')} disabled={saving}>Set Draft</button>
             <button className="btn btn-sm btn-ghost text-red-500" onClick={() => handleBulkAction('delete')} disabled={saving} style={{ color: 'var(--color-danger)' }}>Delete</button>
           </div>
         )}
@@ -408,7 +385,6 @@ export default function ProductsPage() {
                   />
                 </th>
                 <th>Product</th>
-                <th>Status</th>
                 <th>Sales</th>
                 <th>Price</th>
                 <th style={{ textAlign: 'right' }}>Actions</th>
@@ -447,21 +423,12 @@ export default function ProductsPage() {
                       <div>
                         <div className="font-semibold flex items-center gap-2">
                           {product.name}
-                          {product.status === 'draft' && <span className="badge badge-neutral text-xs">Draft</span>}
                         </div>
                         <div className="text-xs text-muted" style={{ fontFamily: 'monospace' }}>/{product.slug}</div>
                       </div>
                     </div>
                   </td>
-                  <td>
-                    <button
-                      className={`btn btn-sm ${product.status === 'live' ? 'btn-secondary' : 'btn-ghost'}`}
-                      onClick={() => handleToggleStatus(product)}
-                      disabled={saving}
-                    >
-                      {product.status === 'live' ? 'Live' : 'Draft'}
-                    </button>
-                  </td>
+
                   <td>{product.sales_count || 0}</td>
                   <td className="font-semibold">₹{Number(product.price).toLocaleString('en-IN')}</td>
                   <td style={{ textAlign: 'right' }}>
