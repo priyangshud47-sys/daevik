@@ -28,7 +28,31 @@ export async function GET(
       return new NextResponse('Unauthorized request. Session expired or invalid.', { status: 401 });
     }
 
-    if (!order.product || !order.product.product_file_url) {
+    if (!order.product) {
+      return new NextResponse('Product not found', { status: 404 });
+    }
+
+    let productFileUrl = order.product.product_file_url;
+    let downloadName = order.product.name;
+    
+    // Check if the order's product (funnel) has an attached digital product
+    const checkoutConfig = order.product.checkout_config as Record<string, unknown> || {};
+    const attachedProductId = checkoutConfig.attached_product_id;
+    
+    if (attachedProductId) {
+      const { data: attachedFile } = await supabase
+        .from('products')
+        .select('name, product_file_url')
+        .eq('id', attachedProductId)
+        .single();
+        
+      if (attachedFile && attachedFile.product_file_url) {
+        productFileUrl = attachedFile.product_file_url;
+        downloadName = attachedFile.name;
+      }
+    }
+
+    if (!productFileUrl) {
       return new NextResponse('Product file not found', { status: 404 });
     }
 
@@ -41,7 +65,7 @@ export async function GET(
     }
 
     // 3. Extract the storage path
-    let storagePath = order.product.product_file_url;
+    let storagePath = productFileUrl;
     if (storagePath.includes('/cdn/')) {
        storagePath = storagePath.split('/cdn/product-files/')[1];
     } else {
@@ -60,7 +84,7 @@ export async function GET(
       .storage
       .from('product-files')
       .createSignedUrl(storagePath, 60, {
-        download: order.product.name // Forces download with the correct filename
+        download: downloadName // Forces download with the correct filename
       });
 
     if (signedError || !signedData?.signedUrl) {

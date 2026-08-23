@@ -41,10 +41,10 @@ export default async function RootLayout({
   const safePixelId = pixelId && /^\d+$/.test(pixelId) ? pixelId : null;
 
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
       </head>
-      <body>
+      <body suppressHydrationWarning>
         <Suspense fallback={null}>
           <FacebookPixel pixelId={safePixelId} />
         </Suspense>
