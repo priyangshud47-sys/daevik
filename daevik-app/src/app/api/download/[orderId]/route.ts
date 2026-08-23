@@ -79,6 +79,15 @@ export async function GET(
       return new NextResponse('Invalid file path', { status: 500 });
     }
 
+    // Ensure the download filename has the correct extension
+    const extMatch = storagePath.match(/\.([a-zA-Z0-9]+)$/);
+    if (extMatch && extMatch[1]) {
+      const ext = `.${extMatch[1]}`;
+      if (!downloadName.toLowerCase().endsWith(ext.toLowerCase())) {
+        downloadName = `${downloadName}${ext}`;
+      }
+    }
+
     // 4. Generate a 60-second Signed URL
     const { data: signedData, error: signedError } = await supabase
       .storage
