@@ -147,13 +147,17 @@ export async function sendProductDeliveryEmail(params: {
     return false;
   }
 
+  const shortOrderId = params.orderId.length > 20 
+    ? params.orderId.substring(0, 8).toUpperCase() 
+    : params.orderId.toUpperCase();
+
   const templateData: TemplateData = {
     customer_name: params.customerName,
     customer_email: params.customerEmail,
     product_name: params.productName,
     product_price: params.productPrice,
     download_link: params.downloadLink,
-    order_id: params.orderId,
+    order_id: shortOrderId,
   };
 
   const subject = renderTemplate(template.subject, templateData);

@@ -23,6 +23,8 @@ export async function GET(request: NextRequest) {
   const startDate = searchParams.get('startDate');
   const endDate = searchParams.get('endDate');
   
+  const search = searchParams.get('search');
+  
   const from = (page - 1) * limit;
   const to = from + limit - 1;
 
@@ -38,6 +40,24 @@ export async function GET(request: NextRequest) {
   if (productId) query = query.eq('product_id', productId);
   if (startDate && endDate) {
     query = query.gte('created_at', startDate).lte('created_at', endDate);
+  }
+
+  if (search) {
+    // 1. Find matching customers first to allow cross-table OR filtering
+    const { data: matchedCustomers } = await supabase
+      .from('customers')
+      .select('id')
+      .or(`name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`);
+      
+    const customerIdList = matchedCustomers?.map(c => c.id).join(',') || '';
+    
+    // 2. Build the OR condition for orders
+    let orQuery = `id::text.ilike.%${search}%,transaction_id.ilike.%${search}%`;
+    if (customerIdList) {
+      orQuery += `,customer_id.in.(${customerIdList})`;
+    }
+    
+    query = query.or(orQuery);
   }
 
   query = query.order('created_at', { ascending: false }).range(from, to);

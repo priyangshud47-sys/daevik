@@ -35,6 +35,7 @@ export default function OrdersPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [activeTab, setActiveTab] = useState<'orders' | 'customers'>('orders');
   const [customerSearch, setCustomerSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const { showToast } = useToast();
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
@@ -47,6 +48,11 @@ export default function OrdersPage() {
   const [adminNote, setAdminNote] = useState('');
   const [updatingOrder, setUpdatingOrder] = useState(false);
 
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 500);
+    return () => clearTimeout(timer);
+  }, [search]);
+
   const fetchOrders = useCallback(async () => {
     setLoading(true);
     try {
@@ -58,6 +64,7 @@ export default function OrdersPage() {
       if (selectedProductId) params.set('product_id', selectedProductId);
       if (startDate) params.set('startDate', startDate);
       if (endDate) params.set('endDate', endDate + 'T23:59:59');
+      if (debouncedSearch) params.set('search', debouncedSearch);
 
       const res = await fetch(`/api/admin/orders?${params.toString()}`);
       if (res.ok) {
@@ -70,7 +77,7 @@ export default function OrdersPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, limit, statusFilter, selectedProductId, startDate, endDate]);
+  }, [page, limit, statusFilter, selectedProductId, startDate, endDate, debouncedSearch]);
 
   useEffect(() => {
     fetchOrders();
@@ -90,12 +97,15 @@ export default function OrdersPage() {
   }, []);
 
   const filteredOrders = orders.filter((order) => {
+    const sq = search.toLowerCase();
     const matchesSearch =
       !search ||
-      order.customer?.name.toLowerCase().includes(search.toLowerCase()) ||
-      order.customer?.email.toLowerCase().includes(search.toLowerCase()) ||
-      order.product?.name.toLowerCase().includes(search.toLowerCase()) ||
-      order.transaction_id?.toLowerCase().includes(search.toLowerCase());
+      order.customer?.name.toLowerCase().includes(sq) ||
+      order.customer?.email.toLowerCase().includes(sq) ||
+      order.product?.name.toLowerCase().includes(sq) ||
+      (order.transaction_id && order.transaction_id.toLowerCase().includes(sq)) ||
+      (order.customer?.phone && order.customer.phone.toLowerCase().includes(sq)) ||
+      order.id.toLowerCase().includes(sq);
 
     return matchesSearch;
   });
