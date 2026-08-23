@@ -44,5 +44,37 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  return NextResponse.json({ error: 'Invalid type' }, { status: 400 });
+  const fileUrl = url.searchParams.get('url');
+
+  if (fileUrl) {
+    let storagePath = fileUrl;
+    if (storagePath.includes('/cdn/')) {
+       storagePath = storagePath.split('/cdn/product-files/')[1];
+    } else {
+       const match = storagePath.match(/product-files\/(.+)$/);
+       if (match && match[1]) {
+           storagePath = decodeURIComponent(match[1].split('?')[0]);
+       }
+    }
+
+    if (!storagePath) {
+      return new NextResponse('Invalid file path', { status: 400 });
+    }
+
+    const { data: signedData, error: signedError } = await supabase
+      .storage
+      .from('product-files')
+      .createSignedUrl(storagePath, 60, {
+        download: true
+      });
+
+    if (signedError || !signedData?.signedUrl) {
+      console.error('Signed URL error:', signedError);
+      return new NextResponse('Failed to generate secure link', { status: 500 });
+    }
+
+    return NextResponse.redirect(signedData.signedUrl);
+  }
+
+  return NextResponse.json({ error: 'Invalid type or missing url parameter' }, { status: 400 });
 }
