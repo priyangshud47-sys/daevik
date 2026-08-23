@@ -178,7 +178,12 @@ export default async function ThankYouPage({
             <h3 className="ty-summary-title">Order Details</h3>
             <div className="ty-summary-row">
               <span>Order ID</span>
-              <span className="ty-summary-value">{order?.gateway_order_id || orderId}</span>
+              <span className="ty-summary-value">
+                {(() => {
+                  const rawId = order?.gateway_order_id || orderId;
+                  return rawId.length > 20 ? rawId.substring(0, 8).toUpperCase() : rawId.toUpperCase();
+                })()}
+              </span>
             </div>
             <div className="ty-summary-row">
               <span>Amount Paid</span>
