@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import { headers } from 'next/headers';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
 import TrackPurchase from '@/components/TrackPurchase';
@@ -62,10 +63,20 @@ export default async function ThankYouPage({
         if (res.ok) {
           const cfData = await res.json();
           if (cfData.order_status === 'PAID') {
-            await supabase.from('orders').update({
-              payment_status: 'completed',
-              transaction_id: cfData.cf_order_id ? cfData.cf_order_id.toString() : null
-            }).eq('id', order.id);
+            const reqHeaders = await headers();
+            const host = reqHeaders.get('host') || 'daevik.in';
+            const protocol = host.includes('localhost') ? 'http' : 'https';
+            const appUrl = `${protocol}://${host}`;
+            
+            const { processOrderCompletion } = await import('@/lib/order-processing');
+            await processOrderCompletion(
+              order.id,
+              cfData.cf_order_id ? cfData.cf_order_id.toString() : null,
+              cfData,
+              'Cashfree',
+              appUrl
+            );
+            
             order.payment_status = 'completed';
           }
         }

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { verifyCashfreeSignature } from '@/lib/payments/cashfree';
-import { sendProductDeliveryEmail } from '@/lib/email';
+import { processOrderCompletion } from '@/lib/order-processing';
 
 export async function POST(request: NextRequest) {
   try {
@@ -48,41 +48,18 @@ export async function POST(request: NextRequest) {
       const orderId = body.data.order.order_id;
       const transactionId = body.data.payment.cf_payment_id;
 
-      // Check order
-      const { data: order } = await supabase
-        .from('orders')
-        .select('*, customer:customers(*), product:products(*)')
-        .eq('id', orderId)
-        .single();
+      // We just call the unified order processor
+      const host = request.headers.get('host');
+      const protocol = request.headers.get('x-forwarded-proto') || 'https';
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || (host ? `${protocol}://${host}` : 'https://daevik.in');
 
-      if (order && order.payment_status === 'pending') {
-        // Mark as completed
-        await supabase
-          .from('orders')
-          .update({
-            payment_status: 'completed',
-            transaction_id: transactionId ? transactionId.toString() : null,
-          })
-          .eq('id', orderId);
-
-        // Send email directly
-        const host = request.headers.get('host');
-        const protocol = request.headers.get('x-forwarded-proto') || 'https';
-        const appUrl = process.env.NEXT_PUBLIC_APP_URL || `${protocol}://${host}`;
-        
-        try {
-          await sendProductDeliveryEmail({
-            customerName: order.customer.name,
-            customerEmail: order.customer.email,
-            productName: order.product.name,
-            productPrice: `₹${order.amount}`,
-            downloadLink: `${appUrl}/thank-you/${order.product.slug}?orderId=${order.id}`,
-            orderId: order.id,
-          });
-        } catch (emailErr) {
-          console.error('Failed to trigger email from webhook', emailErr);
-        }
-      }
+      await processOrderCompletion(
+        orderId,
+        transactionId ? transactionId.toString() : null,
+        body,
+        'Cashfree',
+        appUrl
+      );
     }
 
     return NextResponse.json({ success: true });
