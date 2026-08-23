@@ -300,7 +300,7 @@ export default function FacebookPage() {
       {/* Add Modal */}
       {showAddModal && (
         <div className="modal-backdrop" style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}>
-          <div className="card" style={{ width: '100%', maxWidth: '500px', margin: '20px' }}>
+          <div className="card" style={{ width: '100%', maxWidth: '500px', margin: '20px', backgroundColor: 'var(--color-bg-card)' }}>
             <h2 className="text-xl font-bold mb-2">{editingId ? 'Edit Facebook Pixel' : 'Add Facebook Pixel'}</h2>
             <p className="text-secondary mb-6">Enter your Facebook tracking credentials.</p>
             
