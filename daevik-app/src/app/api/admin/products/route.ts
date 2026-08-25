@@ -99,10 +99,13 @@ export async function POST(request: NextRequest) {
     
     const validData = validationResult.data;
 
+    const { image_url, tags, display_order, ...dbData } = validData;
+    if (image_url) dbData.thumbnail_url = image_url;
+
     const { data, error } = await supabase
       .from('products')
       .insert({
-        ...validData
+        ...dbData
       })
       .select()
       .single();

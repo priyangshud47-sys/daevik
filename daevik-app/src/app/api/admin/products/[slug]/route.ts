@@ -86,9 +86,12 @@ export async function PUT(
       .eq('slug', slug)
       .single();
 
+    const { image_url, tags, display_order, ...dbData } = validData as any;
+    if (image_url) dbData.thumbnail_url = image_url;
+
     const { data, error } = await supabase
       .from('products')
-      .update(validData)
+      .update(dbData)
       .eq('slug', slug)
       .select()
       .single();
