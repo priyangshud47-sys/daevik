@@ -12,12 +12,13 @@ const productUpdateSchema = z.object({
   price: z.number().min(0).optional(),
   description: z.string().nullable().optional(),
   tag: z.string().nullable().optional(),
-  thumbnail_url: z.string().url().nullable().optional(),
+  thumbnail_url: z.string().nullable().optional(),
+  image_url: z.string().nullable().optional(),
   product_file_url: z.string().nullable().optional(),
   gateway_provider: z.enum(['razorpay', 'payu', 'paypal', 'cashfree']).optional(),
   seo_title: z.string().nullable().optional(),
   seo_description: z.string().nullable().optional(),
-  og_image_url: z.string().url().nullable().optional(),
+  og_image_url: z.string().nullable().optional(),
   status: z.enum(['live', 'draft', 'archived']).optional(),
   checkout_config: z.any().optional(), // allow any json for now
 });
