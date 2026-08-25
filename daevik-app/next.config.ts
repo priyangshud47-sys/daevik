@@ -19,6 +19,9 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  outputFileTracingIncludes: {
+    '/api/admin/products/sync': ['./local_products/**/*'],
+  },
   // Allow uploaded landing page HTML to be served in iframes
   async headers() {
     const isDev = process.env.NODE_ENV === 'development';
