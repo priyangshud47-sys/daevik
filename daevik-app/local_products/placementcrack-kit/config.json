@@ -1,0 +1,8 @@
+{
+  "name": "PlacementCrack Kit",
+  "price": 199,
+  "description": "The all-in-one digital bundle covering 30+ companies, aptitude, coding, and interview prep.",
+  "gateway_provider": "razorpay",
+  "status": "live",
+  "thumbnail_url": "/product-images/placementcrack-kit.jpg"
+}
