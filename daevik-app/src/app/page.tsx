@@ -11,6 +11,7 @@ async function getProducts(): Promise<Product[]> {
     .from('products')
     .select('*')
     .eq('status', 'live')
+    .or('tag.neq.digital_file,tag.is.null')
     .order('created_at', { ascending: false });
 
   if (error) {
