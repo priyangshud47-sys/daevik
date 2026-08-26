@@ -403,7 +403,89 @@ export default function EmailsPage() {
           </div>
         </div>
 
-      
+      {/* Email Logs */}
+      <div className="card" style={{ gridColumn: 'span 2', marginTop: 'var(--space-6)' }}>
+        <div className="flex justify-between items-center" style={{ marginBottom: 'var(--space-4)' }}>
+          <div>
+            <h3 style={{ fontSize: 'var(--text-lg)', marginBottom: 'var(--space-1)' }}>Email Delivery Logs</h3>
+            <p className="text-xs text-muted">Recent email delivery attempts and their status</p>
+          </div>
+          <button className="btn btn-ghost btn-sm" onClick={() => { fetchTemplates(); }} style={{ fontSize: '12px' }}>
+            ↻ Refresh
+          </button>
+        </div>
+
+        {emailLogs.length > 0 ? (
+          <div className="table-container">
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>Status</th>
+                  <th>Recipient</th>
+                  <th>Subject</th>
+                  <th>Order</th>
+                  <th>Sent At</th>
+                  <th>Error</th>
+                </tr>
+              </thead>
+              <tbody>
+                {emailLogs.map((log: any) => (
+                  <tr key={log.id}>
+                    <td>
+                      <span
+                        className="badge"
+                        style={{
+                          backgroundColor:
+                            log.status === 'sent' ? 'rgba(16,185,129,0.15)' :
+                            log.status === 'failed' ? 'rgba(220,38,38,0.15)' :
+                            'rgba(245,158,11,0.15)',
+                          color:
+                            log.status === 'sent' ? '#059669' :
+                            log.status === 'failed' ? '#DC2626' :
+                            '#D97706',
+                          padding: '2px 10px',
+                          borderRadius: '9999px',
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          textTransform: 'uppercase' as const,
+                        }}
+                      >
+                        {log.status}
+                      </span>
+                    </td>
+                    <td className="text-sm">{log.customer_email}</td>
+                    <td className="text-sm" style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {log.subject}
+                    </td>
+                    <td className="text-xs" style={{ fontFamily: 'monospace', color: 'var(--color-text-muted)' }}>
+                      {log.order_id ? log.order_id.substring(0, 8) + '...' : '—'}
+                    </td>
+                    <td className="text-xs text-muted">
+                      {log.sent_at
+                        ? new Date(log.sent_at).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' })
+                        : log.created_at
+                        ? new Date(log.created_at).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' })
+                        : '—'}
+                    </td>
+                    <td className="text-xs" style={{ color: 'var(--color-danger)', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {log.error_message || '—'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="text-center" style={{ padding: 'var(--space-8) var(--space-4)', color: 'var(--color-text-muted)' }}>
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ margin: '0 auto var(--space-3)', opacity: 0.4 }}>
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+              <polyline points="22,6 12,13 2,6"></polyline>
+            </svg>
+            <p className="text-sm font-semibold" style={{ marginBottom: '4px' }}>No email logs yet</p>
+            <p className="text-xs">Logs will appear here after a purchase triggers an automatic email delivery.</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
