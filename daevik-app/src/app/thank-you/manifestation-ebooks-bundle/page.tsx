@@ -60,10 +60,21 @@ export default async function ManifestationEbooksThankYou({
         if (res.ok) {
           const cfData = await res.json();
           if (cfData.order_status === 'PAID') {
-            await supabase.from('orders').update({
-              payment_status: 'completed',
-              transaction_id: cfData.cf_order_id ? cfData.cf_order_id.toString() : null
-            }).eq('id', order.id);
+            const { headers: getHeaders } = await import('next/headers');
+            const reqHeaders = await getHeaders();
+            const host = reqHeaders.get('host') || 'daevik.in';
+            const protocol = host.includes('localhost') ? 'http' : 'https';
+            const appUrl = `${protocol}://${host}`;
+            
+            const { processOrderCompletion } = await import('@/lib/order-processing');
+            await processOrderCompletion(
+              order.id,
+              cfData.cf_order_id ? cfData.cf_order_id.toString() : null,
+              cfData,
+              'Cashfree',
+              appUrl
+            );
+            
             order.payment_status = 'completed';
           }
         }
