@@ -313,12 +313,21 @@ export default function CheckoutPage() {
           redirectTarget: '_modal',
         };
 
-        cf.checkout(checkoutOptions).then((result: any) => {
+        cf.checkout(checkoutOptions).then(async (result: any) => {
           if (result && result.error) {
             setError(result.error.message || 'Payment failed or cancelled.');
             setSubmitting(false);
           }
           if (result && result.paymentDetails) {
+            try {
+              await fetch('/api/payments/verify-cashfree', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ orderId: data.orderId }),
+              });
+            } catch (e) {
+              console.error('Verification call failed, proceeding to thank-you page:', e);
+            }
             window.location.href = `/thank-you/${slug}?orderId=${data.orderId}`;
           }
         }).catch((err: any) => {
