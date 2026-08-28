@@ -87,6 +87,21 @@ export async function POST(request: NextRequest) {
       );
 
       console.log('Cashfree Webhook: Order processed successfully', orderId);
+    } else if (body.type === 'PAYMENT_FAILED_WEBHOOK' || body.data?.payment?.payment_status === 'FAILED') {
+      const orderId = body.data.order.order_id;
+      const transactionId = body.data.payment.cf_payment_id;
+      
+      console.log('Cashfree Webhook: Payment failed for order', orderId);
+      
+      await supabase
+        .from('orders')
+        .update({
+          payment_status: 'failed',
+          transaction_id: transactionId ? transactionId.toString() : null,
+          gateway_response: body,
+        })
+        .eq('id', orderId)
+        .eq('payment_status', 'pending');
     }
 
     return NextResponse.json({ success: true });
