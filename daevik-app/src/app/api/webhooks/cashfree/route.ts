@@ -53,6 +53,13 @@ export async function POST(request: NextRequest) {
 
     const isValid = verifyCashfreeSignature(rawBody, signature, timestamp, secret);
 
+    // If it's a test webhook from the dashboard, just return 200 OK
+    // Cashfree often sends test webhooks with mismatched signatures (e.g., using test keys while app is in live mode)
+    if (body.type === 'TEST' || body.type === 'TEST_WEBHOOK' || body.type === 'WEBHOOK_TEST') {
+      console.log('Cashfree Webhook: Received test ping. Returning 200 OK.');
+      return NextResponse.json({ success: true, message: 'Test webhook received' });
+    }
+
     if (!isValid) {
       console.error('Cashfree Webhook: Invalid signature. Secret used:', secret.substring(0, 4) + '...');
       return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
