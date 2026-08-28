@@ -269,15 +269,6 @@ function CheckoutContent() {
             setSubmitting(false);
           }
           if (result && result.paymentDetails) {
-            try {
-              await fetch('/api/payments/verify-cashfree', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ orderId: data.orderId }),
-              });
-            } catch (e) {
-              console.error('Verification call failed, proceeding to thank-you page:', e);
-            }
             window.location.href = `/thank-you/zero-investment-guide?orderId=${data.orderId}`;
           }
         }).catch((err: any) => {
