@@ -218,12 +218,7 @@ function CheckoutContent() {
   };
 
   const handleCashfreeCheckout = async (data: any) => {
-    const script = document.createElement('script');
-    script.src = 'https://sdk.cashfree.com/js/v3/cashfree.js';
-    script.async = true;
-    document.body.appendChild(script);
-
-    script.onload = async () => {
+    const launchModal = () => {
       try {
         const cf = (window as unknown as any).Cashfree({
           mode: data.mode === 'live' ? 'production' : 'sandbox',
@@ -250,7 +245,7 @@ function CheckoutContent() {
             } catch (e) {
               console.error('Verification call failed, proceeding to thank-you page:', e);
             }
-            window.location.href = `/thank-you/${slug}?orderId=${data.orderId}`;
+            window.location.href = `/thank-you/placementcrack-kit?orderId=${data.orderId}`;
           }
         }).catch((err: any) => {
           setError(err?.message || 'Error launching Cashfree modal');
@@ -261,6 +256,18 @@ function CheckoutContent() {
         setSubmitting(false);
       }
     };
+
+    if (typeof window !== 'undefined' && (window as any).Cashfree) {
+      launchModal();
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://sdk.cashfree.com/js/v3/cashfree.js';
+    script.async = true;
+    document.body.appendChild(script);
+
+    script.onload = launchModal;
     script.onerror = () => {
       setError('Failed to load Cashfree SDK');
       setSubmitting(false);
