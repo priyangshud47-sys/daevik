@@ -60,6 +60,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, message: 'Test webhook received' });
     }
 
+    // Temporary debug logging to see if Cashfree is even hitting our server
+    await supabase.from('email_logs').insert({
+      customer_email: 'WEBHOOK_HIT',
+      subject: `Webhook Type: ${body.type || 'unknown'}`,
+      status: 'pending',
+      error_message: `Secret: ${secret ? 'found' : 'missing'} | Signature Valid: ${isValid}`,
+    });
+
     if (!isValid) {
       console.error('Cashfree Webhook: Invalid signature. Secret used:', secret.substring(0, 4) + '...');
       return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
