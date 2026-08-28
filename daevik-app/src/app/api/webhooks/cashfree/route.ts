@@ -177,19 +177,9 @@ async function handleReturnUrl(orderId: string, request: NextRequest) {
       console.log('Cashfree Return: Order status for', orderId, ':', cfData.order_status);
 
       if (cfData.order_status === 'PAID') {
-        const host = request.headers.get('host');
-        const protocol = request.headers.get('x-forwarded-proto') || 'https';
-        const appUrl = process.env.NEXT_PUBLIC_APP_URL || (host ? `${protocol}://${host}` : 'https://daevik.in');
-
-        await processOrderCompletion(
-          orderId,
-          cfData.cf_order_id ? cfData.cf_order_id.toString() : null,
-          cfData,
-          'Cashfree',
-          appUrl
-        );
-
-        console.log('Cashfree Return: Order completed and email sent for', orderId);
+        // We no longer process the order synchronously here to avoid 
+        // blocking the browser redirect. The POST webhook handles this.
+        console.log('Cashfree Return: Order is PAID, redirecting to thank you page');
       }
     } else {
       console.error('Cashfree Return: API verification failed', await cfRes.text());
