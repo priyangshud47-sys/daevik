@@ -203,6 +203,14 @@ function CheckoutContent() {
     }
 
     try {
+      // Read FB cookies for CAPI match quality
+      const getCookie = (name: string) => {
+        const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+        return match ? match[2] : undefined;
+      };
+      const fbp = getCookie('_fbp');
+      const fbc = getCookie('_fbc');
+
       const res = await fetch('/api/payments/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -211,6 +219,8 @@ function CheckoutContent() {
           customerName: formData.name,
           customerEmail: formData.email,
           customerPhone: formData.phone,
+          fbp,
+          fbc,
         }),
       });
 

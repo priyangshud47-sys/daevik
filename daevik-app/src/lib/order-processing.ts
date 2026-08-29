@@ -32,7 +32,7 @@ export async function processOrderCompletion(
   // Fetch full order details for emails and tracking
   const { data: order } = await supabase
     .from('orders')
-    .select('*, product:products(*), customer:customers(*)')
+    .select('*, product:products(*), customer:customers(*), fb_browser_id, fb_click_id, user_ip, user_agent')
     .eq('id', orderId)
     .single();
 
@@ -94,6 +94,10 @@ export async function processOrderCompletion(
       userPhone: order.customer.phone || undefined,
       userFirstName: firstName || undefined,
       userLastName: lastName || undefined,
+      fbp: order.fb_browser_id || undefined,
+      fbc: order.fb_click_id || undefined,
+      userIp: order.user_ip || undefined,
+      userAgent: order.user_agent || undefined,
       // fb_pixel_id is stored inside checkout_config, not as a top-level column.
       // fb_access_token does not exist on products — the CAPI lib will fall back
       // to the global fb_capi_config table automatically.

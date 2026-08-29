@@ -10,7 +10,13 @@ import { v4 as uuidv4 } from 'uuid';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { productSlug, customerName, customerEmail, customerPhone } = body;
+    const { productSlug, customerName, customerEmail, customerPhone, fbp, fbc } = body;
+
+    // Capture IP and User-Agent at order creation time for FB CAPI match quality
+    const userIp = request.headers.get('x-forwarded-for')?.split(',')[0].trim()
+      || request.headers.get('x-real-ip')
+      || null;
+    const userAgent = request.headers.get('user-agent') || null;
 
     if (!productSlug || !customerName || !customerEmail || !customerPhone) {
       return NextResponse.json(
@@ -127,6 +133,10 @@ export async function POST(request: NextRequest) {
           gateway_used: 'razorpay',
           payment_status: 'pending',
           gateway_order_id: rzpOrder.id,
+          fb_browser_id: fbp || null,
+          fb_click_id: fbc || null,
+          user_ip: userIp,
+          user_agent: userAgent,
         });
 
         return setSessionCookie(NextResponse.json({
@@ -169,6 +179,10 @@ export async function POST(request: NextRequest) {
           gateway_used: 'payu',
           payment_status: 'pending',
           gateway_order_id: txnId,
+          fb_browser_id: fbp || null,
+          fb_click_id: fbc || null,
+          user_ip: userIp,
+          user_agent: userAgent,
         });
 
         return setSessionCookie(NextResponse.json({
@@ -209,6 +223,10 @@ export async function POST(request: NextRequest) {
           gateway_used: 'cashfree',
           payment_status: 'pending',
           gateway_order_id: cfOrder.orderId,
+          fb_browser_id: fbp || null,
+          fb_click_id: fbc || null,
+          user_ip: userIp,
+          user_agent: userAgent,
         });
 
         return setSessionCookie(NextResponse.json({
