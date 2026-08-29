@@ -43,15 +43,21 @@ export async function sendCAPIEvent(params: CAPIEventParams): Promise<boolean> {
   let accessToken = params.fbAccessToken || FB_ACCESS_TOKEN;
   let testEventCode = FB_TEST_EVENT_CODE;
 
-  // If not provided in params or env, try to fetch from database
+  // If not provided in params or env, try to fetch from database.
+  // Use .limit(1) instead of .single() — .single() errors when multiple active
+  // rows exist (which is the case when multiple pixels are configured).
   if (!pixelId || !accessToken) {
     try {
-      const { data: config } = await supabase
+      // Prefer a config whose pixel_id matches the one passed in params (per-product pixel).
+      // Fall back to the most-recently-updated active config.
+      const { data: configs } = await supabase
         .from('fb_capi_config')
         .select('*')
         .eq('active', true)
-        .single();
-        
+        .order('updated_at', { ascending: false });
+
+      const config = configs?.find((c) => c.pixel_id === params.fbPixelId) ?? configs?.[0];
+
       if (config && config.pixel_id && config.access_token) {
         pixelId = config.pixel_id;
         accessToken = config.access_token;
