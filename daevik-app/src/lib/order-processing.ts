@@ -79,6 +79,10 @@ export async function processOrderCompletion(
 
   // Track Facebook CAPI
   try {
+    const nameParts = (order.customer.name || '').trim().split(' ');
+    const firstName = nameParts[0] || '';
+    const lastName = nameParts.slice(1).join(' ') || '';
+
     await trackPurchase({
       url: `${appUrl}/checkout/${order.product.slug}`,
       eventId: `purchase_${order.id}`,
@@ -87,6 +91,9 @@ export async function processOrderCompletion(
       value: order.amount,
       currency: order.currency,
       userEmail: order.customer.email,
+      userPhone: order.customer.phone || undefined,
+      userFirstName: firstName || undefined,
+      userLastName: lastName || undefined,
       // fb_pixel_id is stored inside checkout_config, not as a top-level column.
       // fb_access_token does not exist on products — the CAPI lib will fall back
       // to the global fb_capi_config table automatically.

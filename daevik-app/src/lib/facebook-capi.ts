@@ -15,6 +15,8 @@ interface CAPIEventParams {
   sourceUrl: string;
   userEmail?: string;
   userPhone?: string;
+  userFirstName?: string; // Improves audience match rate significantly
+  userLastName?: string;  // Improves audience match rate significantly
   userIp?: string;
   userAgent?: string;
   fbp?: string; // Facebook browser ID cookie
@@ -83,7 +85,15 @@ export async function sendCAPIEvent(params: CAPIEventParams): Promise<boolean> {
     userData.em = [hashPII(params.userEmail)];
   }
   if (params.userPhone) {
-    userData.ph = [hashPII(params.userPhone)];
+    // Strip non-numeric chars except leading + for E.164 format, then hash
+    const cleanPhone = params.userPhone.replace(/[^\d]/g, '');
+    userData.ph = [hashPII(cleanPhone)];
+  }
+  if (params.userFirstName) {
+    userData.fn = [hashPII(params.userFirstName)];
+  }
+  if (params.userLastName) {
+    userData.ln = [hashPII(params.userLastName)];
   }
   if (params.userIp) {
     userData.client_ip_address = params.userIp;
@@ -208,6 +218,9 @@ export async function trackPurchase(params: {
   value: number;
   currency: string;
   userEmail: string;
+  userPhone?: string;
+  userFirstName?: string;
+  userLastName?: string;
   userIp?: string;
   userAgent?: string;
   fbPixelId?: string | null;
@@ -218,6 +231,9 @@ export async function trackPurchase(params: {
     eventId: params.eventId,
     sourceUrl: params.url,
     userEmail: params.userEmail,
+    userPhone: params.userPhone,
+    userFirstName: params.userFirstName,
+    userLastName: params.userLastName,
     userIp: params.userIp,
     userAgent: params.userAgent,
     fbPixelId: params.fbPixelId,
