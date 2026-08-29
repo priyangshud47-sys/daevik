@@ -87,8 +87,11 @@ export async function processOrderCompletion(
       value: order.amount,
       currency: order.currency,
       userEmail: order.customer.email,
-      fbPixelId: order.product.fb_pixel_id,
-      fbAccessToken: order.product.fb_access_token,
+      // fb_pixel_id is stored inside checkout_config, not as a top-level column.
+      // fb_access_token does not exist on products — the CAPI lib will fall back
+      // to the global fb_capi_config table automatically.
+      fbPixelId: (order.product.checkout_config as Record<string, string> | null)?.fb_pixel_id || null,
+      fbAccessToken: null,
     });
   } catch (fbErr) {
     console.error('Failed to track FB CAPI:', fbErr);
