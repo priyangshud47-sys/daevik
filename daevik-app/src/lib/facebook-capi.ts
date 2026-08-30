@@ -13,6 +13,7 @@ interface CAPIEventParams {
   eventName: EventName;
   eventId: string; // For deduplication with client-side Pixel
   sourceUrl: string;
+  externalId?: string;  // Stable user identifier (session/customer ID) — hashed before sending
   userEmail?: string;
   userPhone?: string;
   userFirstName?: string; // Improves audience match rate significantly
@@ -81,6 +82,9 @@ export async function sendCAPIEvent(params: CAPIEventParams): Promise<boolean> {
 
   const userData: Record<string, string | string[]> = {};
 
+  if (params.externalId) {
+    userData.external_id = [hashPII(params.externalId)];
+  }
   if (params.userEmail) {
     userData.em = [hashPII(params.userEmail)];
   }
@@ -181,7 +185,11 @@ export async function trackInitiateCheckout(params: {
   productId: string;
   value: number;
   currency: string;
+  externalId?: string;
   userEmail?: string;
+  userPhone?: string;
+  userFirstName?: string;
+  userLastName?: string;
   userIp?: string;
   userAgent?: string;
   fbp?: string;
@@ -193,7 +201,11 @@ export async function trackInitiateCheckout(params: {
     eventName: 'InitiateCheckout',
     eventId: params.eventId,
     sourceUrl: params.url,
+    externalId: params.externalId,
     userEmail: params.userEmail,
+    userPhone: params.userPhone,
+    userFirstName: params.userFirstName,
+    userLastName: params.userLastName,
     userIp: params.userIp,
     userAgent: params.userAgent,
     fbp: params.fbp,

@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { event, url, productName, productId, value, currency, userEmail, fbp, fbc } = body;
+    const { event, url, productName, productId, value, currency, externalId, userEmail, userPhone, userFirstName, userLastName, fbp, fbc } = body;
 
     // Get client IP and user agent
     const userIp = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || undefined;
@@ -34,7 +34,11 @@ export async function POST(request: NextRequest) {
         productId: productId || 'unknown',
         value: value || 0,
         currency: currency || 'INR',
+        externalId,
         userEmail,
+        userPhone,
+        userFirstName,
+        userLastName,
         userIp,
         userAgent,
         fbp: finalFbp,

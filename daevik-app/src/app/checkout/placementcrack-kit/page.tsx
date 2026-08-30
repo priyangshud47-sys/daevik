@@ -144,7 +144,8 @@ function CheckoutContent() {
         productName: product.name,
         productId: product.id,
         value: product.price,
-        currency: 'INR'
+        currency: 'INR',
+        externalId: sessionId,
       }),
     }).catch(() => {});
 
@@ -185,6 +186,32 @@ function CheckoutContent() {
       };
       const fbp = getCookie('_fbp');
       const fbc = getCookie('_fbc');
+
+      // Second enriched CAPI InitiateCheckout — now we have the user's data
+      const sessionId = sessionStorage.getItem('daevik_session') || '';
+      const nameParts = formData.name.trim().split(' ');
+      const userFirstName = nameParts[0] || '';
+      const userLastName = nameParts.slice(1).join(' ') || '';
+      fetch('/api/track/capi', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event: 'InitiateCheckout',
+          eventId: `${checkoutEventId.current}_enriched`,
+          url: window.location.href,
+          productName: product.name,
+          productId: product.id,
+          value: product.price,
+          currency: 'INR',
+          externalId: sessionId,
+          userEmail: formData.email,
+          userPhone: formData.phone,
+          userFirstName,
+          userLastName,
+          fbp,
+          fbc,
+        }),
+      }).catch(() => {});
 
       const res = await fetch('/api/payments/create-order', {
         method: 'POST',
