@@ -116,24 +116,6 @@ export default function CheckoutPage() {
         }),
       }).catch(() => {});
 
-      // Facebook CAPI InitiateCheckout (initial — fires on page load with session ID only)
-      const sessionId = sessionStorage.getItem('daevik_session') || `session_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-      sessionStorage.setItem('daevik_session', sessionId);
-      fetch('/api/track/capi', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          event: 'InitiateCheckout',
-          eventId: checkoutEventId.current,
-          url: window.location.href,
-          productName: product.name,
-          productId: product.id,
-          value: product.price,
-          currency: 'INR',
-          externalId: sessionId,
-        }),
-      }).catch(() => {});
-
       // Facebook Client-Side Pixel
       trackFbEvent('InitiateCheckout', {
         value: product.price,
@@ -205,7 +187,7 @@ export default function CheckoutPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           event: 'InitiateCheckout',
-          eventId: `${checkoutEventId.current}_enriched`,
+          eventId: checkoutEventId.current,
           url: window.location.href,
           productName: product.name,
           productId: product.id,

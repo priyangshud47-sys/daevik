@@ -134,21 +134,6 @@ function CheckoutContent() {
       }),
     }).catch(() => {});
 
-    fetch('/api/track/capi', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        event: 'InitiateCheckout',
-        eventId: checkoutEventId.current,
-        url: window.location.href,
-        productName: product.name,
-        productId: product.id,
-        value: product.price,
-        currency: 'INR',
-        externalId: sessionId,
-      }),
-    }).catch(() => {});
-
     trackFbEvent('InitiateCheckout', {
       value: product.price,
       currency: 'INR',
@@ -197,7 +182,7 @@ function CheckoutContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           event: 'InitiateCheckout',
-          eventId: `${checkoutEventId.current}_enriched`,
+          eventId: checkoutEventId.current,
           url: window.location.href,
           productName: product.name,
           productId: product.id,
