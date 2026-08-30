@@ -90,6 +90,7 @@ export async function processOrderCompletion(
       productId: order.product.id,
       value: order.amount,
       currency: order.currency,
+      externalId: order.customer.id || order.id,
       userEmail: order.customer.email,
       userPhone: order.customer.phone || undefined,
       userFirstName: firstName || undefined,

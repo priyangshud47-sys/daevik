@@ -229,12 +229,15 @@ export async function trackPurchase(params: {
   productId: string;
   value: number;
   currency: string;
+  externalId?: string;
   userEmail: string;
   userPhone?: string;
   userFirstName?: string;
   userLastName?: string;
   userIp?: string;
   userAgent?: string;
+  fbp?: string;
+  fbc?: string;
   fbPixelId?: string | null;
   fbAccessToken?: string | null;
 }) {
@@ -242,12 +245,15 @@ export async function trackPurchase(params: {
     eventName: 'Purchase',
     eventId: params.eventId,
     sourceUrl: params.url,
+    externalId: params.externalId,
     userEmail: params.userEmail,
     userPhone: params.userPhone,
     userFirstName: params.userFirstName,
     userLastName: params.userLastName,
     userIp: params.userIp,
     userAgent: params.userAgent,
+    fbp: params.fbp,
+    fbc: params.fbc,
     fbPixelId: params.fbPixelId,
     fbAccessToken: params.fbAccessToken,
     customData: {
