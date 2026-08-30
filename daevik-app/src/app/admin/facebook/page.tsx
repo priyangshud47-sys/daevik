@@ -39,6 +39,10 @@ export default function FacebookPage() {
       if (res.ok) {
         const data = await res.json();
         setConfigs(Array.isArray(data) ? data : []);
+      } else {
+        const errText = await res.text().catch(() => '');
+        console.error(`[Facebook] API returned ${res.status}:`, errText);
+        showToast(`Failed to load pixels (HTTP ${res.status})`, 'error');
       }
       if (gaRes.ok) {
         const gaData = await gaRes.json();

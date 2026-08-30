@@ -1,17 +1,12 @@
 // Admin Facebook CAPI Config API
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
 
 import { supabase } from '@/lib/supabase';
 
 // GET all Facebook CAPIs
+// Note: Auth is enforced by middleware (proxy.ts authorized callback) — no duplicate check needed
 export async function GET() {
-  const session = await auth();
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
   const { data, error } = await supabase
     .from('fb_capi_config')
     .select('*')
@@ -26,11 +21,6 @@ export async function GET() {
 
 // POST create a new Facebook CAPI
 export async function POST(request: NextRequest) {
-  const session = await auth();
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
   try {
     const body = await request.json();
 
@@ -65,11 +55,6 @@ export async function POST(request: NextRequest) {
 
 // PUT update an existing Facebook CAPI
 export async function PUT(request: NextRequest) {
-  const session = await auth();
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
   try {
     const body = await request.json();
     
@@ -109,11 +94,6 @@ export async function PUT(request: NextRequest) {
 
 // DELETE a Facebook CAPI
 export async function DELETE(request: NextRequest) {
-  const session = await auth();
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
   try {
     const url = new URL(request.url);
     const id = url.searchParams.get('id');
