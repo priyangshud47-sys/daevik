@@ -89,9 +89,15 @@ export async function sendCAPIEvent(params: CAPIEventParams): Promise<boolean> {
     userData.em = [hashPII(params.userEmail)];
   }
   if (params.userPhone) {
-    // Strip non-numeric chars except leading + for E.164 format, then hash
-    const cleanPhone = params.userPhone.replace(/[^\d]/g, '');
-    userData.ph = [hashPII(cleanPhone)];
+    // Strip non-numeric chars and leading zeros
+    let cleanPhone = params.userPhone.replace(/[^\d]/g, '').replace(/^0+/, '');
+    // If standard 10-digit Indian mobile number, add 91 country code for Meta E.164 compliance
+    if (cleanPhone.length === 10) {
+      cleanPhone = `91${cleanPhone}`;
+    }
+    if (cleanPhone) {
+      userData.ph = [hashPII(cleanPhone)];
+    }
   }
   if (params.userFirstName) {
     userData.fn = [hashPII(params.userFirstName)];
