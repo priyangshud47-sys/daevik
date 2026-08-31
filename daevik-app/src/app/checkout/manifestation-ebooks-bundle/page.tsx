@@ -4,6 +4,7 @@ import Link from 'next/link';
 import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { trackFbEvent } from '@/lib/fb-client';
+import { trackGoogleBeginCheckout, setGoogleUserData } from '@/lib/google-client';
 import PhoneInput, { isValidPhoneNumber } from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 
@@ -148,6 +149,14 @@ function CheckoutContent() {
       content_ids: [product.id],
       content_type: 'product',
     }, { eventID: checkoutEventId.current });
+
+    // Google Ads & GA4 begin_checkout event
+    trackGoogleBeginCheckout({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      currency: 'INR',
+    });
   }, []);
 
   // Check for payment error from redirect
@@ -206,6 +215,15 @@ function CheckoutContent() {
           fbc,
         }),
       }).catch(() => {});
+
+      // Google Ads Enhanced Conversions data
+      setGoogleUserData({
+        email: formData.email,
+        phone_number: formData.phone,
+        first_name: userFirstName || undefined,
+        last_name: userLastName || undefined,
+        country: country || 'IN',
+      });
 
       const res = await fetch('/api/payments/create-order', {
         method: 'POST',

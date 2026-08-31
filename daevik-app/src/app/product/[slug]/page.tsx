@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { hideProductUrls } from '@/lib/utils';
+import TrackProductView from '@/components/TrackProductView';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -49,6 +50,11 @@ export default async function ProductLandingPage({ params }: Props) {
   // Default product page (Safe structured React template)
   return (
     <div className="checkout-layout">
+      <TrackProductView
+        productId={product.id}
+        productName={product.name}
+        price={product.price}
+      />
       <div style={{ maxWidth: '800px', margin: '0 auto', padding: 'var(--space-8) var(--space-6)' }}>
         <header style={{ marginBottom: 'var(--space-8)' }}>
           <Link href="/" className="site-logo" style={{ fontSize: 'var(--text-xl)' }}>

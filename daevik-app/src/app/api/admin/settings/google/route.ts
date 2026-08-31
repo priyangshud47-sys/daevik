@@ -1,34 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import { supabase } from '@/lib/supabase';
+import { getGoogleTrackingConfig, saveGoogleTrackingConfig } from '@/lib/google-config';
 
 export async function GET() {
   const session = await auth();
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { data, error } = await supabase.from('site_settings').select('*').eq('key', 'google_analytics').single();
-  if (error && error.code !== 'PGRST116') {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  try {
+    const config = await getGoogleTrackingConfig();
+    return NextResponse.json(config);
+  } catch (err) {
+    console.error('Failed to get Google tracking config:', err);
+    return NextResponse.json({ error: 'Failed to load configuration' }, { status: 500 });
   }
-
-  return NextResponse.json(data ? data.value : { ga4_id: '' });
 }
 
 export async function PUT(request: NextRequest) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const body = await request.json();
-  
-  const { data, error } = await supabase
-    .from('site_settings')
-    .upsert(
-      { key: 'google_analytics', value: body, updated_at: new Date().toISOString() },
-      { onConflict: 'key' }
-    )
-    .select()
-    .single();
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data.value);
+  try {
+    const body = await request.json();
+    const updated = await saveGoogleTrackingConfig(body);
+    return NextResponse.json(updated);
+  } catch (err) {
+    console.error('Failed to save Google tracking config:', err);
+    return NextResponse.json({ error: 'Failed to save configuration' }, { status: 500 });
+  }
 }

@@ -145,6 +145,10 @@ export default async function ThankYouPage({
           productName={project.name}
           productId={project.id}
           eventId={`purchase_${order.id}`}
+          orderId={order.id}
+          customerEmail={order.customer?.email}
+          customerPhone={order.customer?.phone || undefined}
+          customerName={order.customer?.name}
         />
       )}
       <div className="ty-header-bar">

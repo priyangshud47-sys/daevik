@@ -27,6 +27,7 @@ const navItems = [
       { label: 'Funnel Analytics', href: '/admin/analytics', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
       { label: 'SEO', href: '/admin/seo', icon: 'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z' },
       { label: 'Facebook CAPI', href: '/admin/facebook', icon: 'M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1' },
+      { label: 'Google Tracking', href: '/admin/google', icon: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z' },
     ],
   },
   {
@@ -46,6 +47,7 @@ const pageTitles: Record<string, string> = {
   '/admin/analytics': 'Funnel Analytics',
   '/admin/seo': 'SEO Settings',
   '/admin/facebook': 'Facebook CAPI',
+  '/admin/google': 'Google Ads & Analytics',
   '/admin/emails': 'Email Templates',
   '/admin/payments': 'Payment Gateways',
 };

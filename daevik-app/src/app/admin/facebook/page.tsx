@@ -2,6 +2,7 @@
 
 import { useToast } from '@/components/ToastProvider';
 import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import ConfirmModal from '@/components/ConfirmModal';
 import ToggleSwitch from '@/components/ToggleSwitch';
 
@@ -23,18 +24,13 @@ export default function FacebookPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ pixel_id: '', access_token: '', test_event_code: '' });
-  const [ga4Id, setGa4Id] = useState('');
-  const [savingGa4, setSavingGa4] = useState(false);
   
   const { showToast } = useToast();
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
 
   const fetchConfigs = useCallback(async () => {
     try {
-      const [res, gaRes] = await Promise.all([
-        fetch('/api/admin/facebook'),
-        fetch('/api/admin/settings/google')
-      ]);
+      const res = await fetch('/api/admin/facebook');
       
       if (res.ok) {
         const data = await res.json();
@@ -44,38 +40,15 @@ export default function FacebookPage() {
         console.error(`[Facebook] API returned ${res.status}:`, errText);
         showToast(`Failed to load pixels (HTTP ${res.status})`, 'error');
       }
-      if (gaRes.ok) {
-        const gaData = await gaRes.json();
-        if (gaData?.ga4_id) setGa4Id(gaData.ga4_id);
-      }
     } catch (err) {
       console.error('Failed to fetch Facebook configs:', err);
       showToast('Failed to load configurations', 'error');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [showToast]);
 
   useEffect(() => { fetchConfigs(); }, [fetchConfigs]);
-
-
-  const handleSaveGa4 = async () => {
-    setSavingGa4(true);
-    try {
-      const res = await fetch('/api/admin/settings/google', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ga4_id: ga4Id })
-      });
-      if (res.ok) {
-        showToast('GA4 settings saved', 'success');
-      }
-    } catch (e) {
-      showToast('Failed to save GA4', 'error');
-    } finally {
-      setSavingGa4(false);
-    }
-  };
 
 
   const submitForm = async (e: React.FormEvent) => {
@@ -190,23 +163,14 @@ export default function FacebookPage() {
       
 
 
-      <div className="card mb-8">
-        <h3 className="text-lg font-bold mb-4">Google Analytics 4</h3>
-        <div className="form-group" style={{ maxWidth: '400px' }}>
-          <label className="form-label">Measurement ID (e.g. G-XXXXXXXXXX)</label>
-          <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
-            <input 
-              type="text" 
-              className="form-input" 
-              value={ga4Id} 
-              onChange={e => setGa4Id(e.target.value)} 
-              placeholder="G-" 
-            />
-            <button className="btn btn-primary" onClick={handleSaveGa4} disabled={savingGa4}>
-              {savingGa4 ? 'Saving...' : 'Save GA4'}
-            </button>
-          </div>
+      <div className="card mb-8" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <h3 className="text-base font-bold mb-1">Google Ads &amp; Analytics Tracking</h3>
+          <p className="text-secondary text-sm m-0">Configure Google Ads Conversion IDs, Purchase Conversion Labels, and GA4.</p>
         </div>
+        <Link href="/admin/google" className="btn btn-secondary btn-sm">
+          Open Google Tracking &rarr;
+        </Link>
       </div>
 
       {/* List of Pixels */}

@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Suspense } from "react";
 import FacebookPixel from "@/components/FacebookPixel";
+import GoogleTag from "@/components/GoogleTag";
 import { supabase } from "@/lib/supabase";
+import { getGoogleTrackingConfig } from "@/lib/google-config";
 
 export const metadata: Metadata = {
   title: "Daevik — Premium Digital Products",
@@ -36,6 +38,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const pixelId = await getPixelId();
+  const googleConfig = await getGoogleTrackingConfig();
 
   // Security: only allow purely numeric pixel IDs
   const safePixelId = pixelId && /^\d+$/.test(pixelId) ? pixelId : null;
@@ -47,6 +50,7 @@ export default async function RootLayout({
       <body suppressHydrationWarning>
         <Suspense fallback={null}>
           <FacebookPixel pixelId={safePixelId} />
+          <GoogleTag config={googleConfig} />
         </Suspense>
         {children}
       </body>
