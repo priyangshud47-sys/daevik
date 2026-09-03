@@ -111,11 +111,31 @@ export async function sendCAPIEvent(params: CAPIEventParams): Promise<boolean> {
   if (params.userAgent) {
     userData.client_user_agent = params.userAgent;
   }
+  // Normalize and assign fbp (Facebook browser ID)
   if (params.fbp) {
-    userData.fbp = params.fbp;
+    const cleanFbp = params.fbp.trim();
+    if (cleanFbp) {
+      userData.fbp = cleanFbp.startsWith('fb.') ? cleanFbp : `fb.1.${Date.now()}.${cleanFbp}`;
+    }
   }
+
+  // Normalize and assign fbc (Facebook click ID)
   if (params.fbc) {
-    userData.fbc = params.fbc;
+    const cleanFbc = params.fbc.trim();
+    if (cleanFbc) {
+      userData.fbc = cleanFbc.startsWith('fb.') ? cleanFbc : `fb.1.${Date.now()}.${cleanFbc}`;
+    }
+  }
+
+  // Fallback: If fbc is missing, automatically extract fbclid from sourceUrl query string
+  if (!userData.fbc && params.sourceUrl) {
+    try {
+      const parsedUrl = new URL(params.sourceUrl);
+      const fbclid = parsedUrl.searchParams.get('fbclid');
+      if (fbclid) {
+        userData.fbc = `fb.1.${Date.now()}.${fbclid}`;
+      }
+    } catch {}
   }
 
   const eventData: Record<string, unknown> = {

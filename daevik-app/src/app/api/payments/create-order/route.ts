@@ -12,6 +12,22 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { productSlug, customerName, customerEmail, customerPhone, fbp, fbc, ga_client_id } = body;
 
+    // Resolve fbp and fbc with fallback to cookies and referer
+    const resolvedFbp = fbp || request.cookies.get('_fbp')?.value || null;
+    let resolvedFbc = fbc || request.cookies.get('_fbc')?.value || null;
+    if (!resolvedFbc) {
+      const referer = request.headers.get('referer');
+      if (referer) {
+        try {
+          const parsed = new URL(referer);
+          const fbclid = parsed.searchParams.get('fbclid');
+          if (fbclid) {
+            resolvedFbc = `fb.1.${Date.now()}.${fbclid}`;
+          }
+        } catch {}
+      }
+    }
+
     // Capture IP and User-Agent at order creation time for FB CAPI match quality
     const userIp = request.headers.get('x-forwarded-for')?.split(',')[0].trim()
       || request.headers.get('x-real-ip')
@@ -133,8 +149,8 @@ export async function POST(request: NextRequest) {
           gateway_used: 'razorpay',
           payment_status: 'pending',
           gateway_order_id: rzpOrder.id,
-          fb_browser_id: fbp || null,
-          fb_click_id: fbc || null,
+          fb_browser_id: resolvedFbp,
+          fb_click_id: resolvedFbc,
           user_ip: userIp,
           user_agent: userAgent,
           ga_client_id: ga_client_id || null,
@@ -180,8 +196,8 @@ export async function POST(request: NextRequest) {
           gateway_used: 'payu',
           payment_status: 'pending',
           gateway_order_id: txnId,
-          fb_browser_id: fbp || null,
-          fb_click_id: fbc || null,
+          fb_browser_id: resolvedFbp,
+          fb_click_id: resolvedFbc,
           user_ip: userIp,
           user_agent: userAgent,
           ga_client_id: ga_client_id || null,
@@ -225,8 +241,8 @@ export async function POST(request: NextRequest) {
           gateway_used: 'cashfree',
           payment_status: 'pending',
           gateway_order_id: cfOrder.orderId,
-          fb_browser_id: fbp || null,
-          fb_click_id: fbc || null,
+          fb_browser_id: resolvedFbp,
+          fb_click_id: resolvedFbc,
           user_ip: userIp,
           user_agent: userAgent,
           ga_client_id: ga_client_id || null,

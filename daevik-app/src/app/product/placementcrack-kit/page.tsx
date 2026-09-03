@@ -86,11 +86,6 @@ export default function PlacementCrackKitPage() {
   useEffect(() => {
     if (eventFired.current) return;
     eventFired.current = true;
-    fetch('/api/track/capi', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ event: 'PageView', url: window.location.href }),
-    }).catch(() => {});
     trackFbEvent('ViewContent', {
       content_name: 'PlacementCrack Kit',
       content_ids: ['placementcrack-kit'],

@@ -30,16 +30,6 @@ export default function ZeroInvestmentGuidePage() {
     if (eventFired.current) return;
     eventFired.current = true;
     
-    // Server-side PageView
-    fetch('/api/track/capi', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        event: 'PageView',
-        url: window.location.href,
-      }),
-    }).catch(() => {});
-    
     // Client-side ViewContent
     trackFbEvent('ViewContent', {
       content_name: 'Zero Investment Side Income Guide',
