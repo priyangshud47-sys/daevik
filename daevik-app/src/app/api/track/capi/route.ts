@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { trackPageView, trackInitiateCheckout } from '@/lib/facebook-capi';
+import { trackPageView, trackInitiateCheckout, trackPurchase } from '@/lib/facebook-capi';
 import { v4 as uuidv4 } from 'uuid';
 
 export async function POST(request: NextRequest) {
@@ -36,6 +36,26 @@ export async function POST(request: NextRequest) {
         currency: currency || 'INR',
         externalId,
         userEmail,
+        userPhone,
+        userFirstName,
+        userLastName,
+        userIp,
+        userAgent,
+        fbp: finalFbp,
+        fbc: finalFbc,
+      });
+    } else if (event === 'Purchase') {
+      // Server-side Purchase via CAPI — used as a fallback if the webhook-triggered
+      // CAPI call in order-processing.ts fails, or for direct client-triggered CAPI.
+      await trackPurchase({
+        url,
+        eventId,
+        productName: productName || 'Unknown Product',
+        productId: productId || 'unknown',
+        value: value || 0,
+        currency: currency || 'INR',
+        externalId,
+        userEmail: userEmail || '',
         userPhone,
         userFirstName,
         userLastName,

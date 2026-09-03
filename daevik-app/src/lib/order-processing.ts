@@ -84,7 +84,9 @@ export async function processOrderCompletion(
     const lastName = nameParts.slice(1).join(' ') || '';
 
     await trackPurchase({
-      url: `${appUrl}/checkout/${order.product.slug}`,
+      // Use the thank-you page URL so it matches where the client-side fbq('track', 'Purchase')
+      // fires — Meta deduplicates CAPI vs Pixel events by matching eventId AND event_source_url.
+      url: `${appUrl}/thank-you/${order.product.slug}?orderId=${order.id}`,
       eventId: `purchase_${order.id}`,
       productName: order.product.name,
       productId: order.product.id,
