@@ -182,8 +182,36 @@ export function trackGoogleBeginCheckout(product: {
 }
 
 /**
+ * Waits for gtag to be available, then executes the callback.
+ * The thank-you page loads with strategy="afterInteractive", so gtag may
+ * not be defined yet when TrackPurchase's useEffect fires.
+ */
+function withGtag(cb: () => void, maxWaitMs = 10000): void {
+  if (typeof window === 'undefined') return;
+  const start = Date.now();
+  const poll = () => {
+    if (typeof window.gtag === 'function') {
+      cb();
+    } else if (Date.now() - start < maxWaitMs) {
+      setTimeout(poll, 300);
+    } else {
+      console.warn('[GoogleTag] gtag not available after', maxWaitMs, 'ms — conversion event dropped');
+    }
+  };
+  poll();
+}
+
+/**
  * Tracks Purchase conversion for Google Ads Conversion Campaigns & GA4 Ecommerce.
  * Automatically de-duplicates by order ID to prevent multiple conversion counts on refresh.
+ *
+ * Fix notes:
+ * - user_data (Enhanced Conversions) is now set BEFORE the purchase event so Google
+ *   can attach it to the hit.
+ * - The GA4 purchase event and the Google Ads conversion event are both fired inside
+ *   withGtag() which polls until gtag.js is initialized (up to 10 s), preventing the
+ *   silent drop that happens when the script loads lazily via strategy="afterInteractive".
+ * - fetchGoogleConfig() runs in parallel with the gtag wait so there is no extra latency.
  */
 export async function trackGooglePurchase(props: {
   orderId: string;
@@ -201,14 +229,15 @@ export async function trackGooglePurchase(props: {
 
   const dedupeKey = `daevik_g_purchase_${props.orderId}`;
   if (sessionStorage.getItem(dedupeKey)) {
-    console.log(`[GoogleTag] Purchase ${props.orderId} already tracked on this session, skipping duplicate.`);
+    console.log(`[GoogleTag] Purchase ${props.orderId} already tracked this session — skipping duplicate.`);
     return;
   }
   sessionStorage.setItem(dedupeKey, '1');
 
   const currency = props.currency || 'INR';
 
-  // 1. Enhanced Conversions: Set user data first
+  // 1. Enhanced Conversions: set user_data BEFORE firing any event so Google
+  //    attaches it to the purchase hit rather than as a separate signal.
   if (props.customer) {
     const nameParts = (props.customer.name || '').trim().split(' ');
     setGoogleUserData({
@@ -220,36 +249,54 @@ export async function trackGooglePurchase(props: {
     });
   }
 
-  // 2. Fire GA4 standard ecommerce purchase event
-  trackGoogleEvent('purchase', {
-    transaction_id: props.orderId,
-    value: props.value,
-    currency,
-    items: [
-      {
-        item_id: props.productId || 'product',
-        item_name: props.productName || 'Daevik Product',
-        price: props.value,
-        quantity: 1,
-      },
-    ],
+  // 2. Kick off config fetch in parallel — don't block the purchase event on it.
+  const configPromise = fetchGoogleConfig();
+
+  // 3. Fire GA4 standard ecommerce purchase event.
+  //    Wrapped in withGtag so it waits for gtag.js to initialise (race condition fix).
+  withGtag(() => {
+    window.gtag('event', 'purchase', {
+      transaction_id: props.orderId,
+      value: props.value,
+      currency,
+      items: [
+        {
+          item_id: props.productId || 'product',
+          item_name: props.productName || 'Daevik Product',
+          price: props.value,
+          quantity: 1,
+        },
+      ],
+    });
+    console.log(`[GoogleTag] Fired GA4 purchase event for order ${props.orderId}`);
   });
 
-  // 3. Fire Google Ads conversion event with send_to: "AW-CONVERSION_ID/CONVERSION_LABEL"
-  const config = await fetchGoogleConfig();
-  if (config?.google_ads_id && config?.purchase_conversion_label) {
+  // 4. Fire Google Ads conversion event with send_to: "AW-ID/LABEL".
+  //    Wait for both gtag AND the config fetch — then fire once both are ready.
+  configPromise.then(config => {
+    if (!config?.google_ads_id || !config?.purchase_conversion_label) {
+      console.warn('[GoogleTag] Google Ads conversion skipped — missing ads_id or purchase_conversion_label in config.');
+      return;
+    }
+
     const adsId = config.google_ads_id.startsWith('AW-')
       ? config.google_ads_id
       : `AW-${config.google_ads_id}`;
 
-    trackGoogleEvent('conversion', {
-      send_to: `${adsId}/${config.purchase_conversion_label}`,
-      value: props.value,
-      currency,
-      transaction_id: props.orderId,
+    const sendTo = `${adsId}/${config.purchase_conversion_label}`;
+
+    withGtag(() => {
+      window.gtag('event', 'conversion', {
+        send_to: sendTo,
+        value: props.value,
+        currency,
+        transaction_id: props.orderId,
+      });
+      console.log(`[GoogleTag] Fired Google Ads Conversion → ${sendTo}`);
     });
-    console.log(`[GoogleTag] Fired Google Ads Conversion to ${adsId}/${config.purchase_conversion_label}`);
-  }
+  }).catch(err => {
+    console.warn('[GoogleTag] fetchGoogleConfig failed, Google Ads conversion not sent:', err);
+  });
 }
 
 /**
