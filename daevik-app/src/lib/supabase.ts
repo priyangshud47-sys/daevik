@@ -3,10 +3,10 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 // Server-side only Supabase client using service-role key
 // NEVER import this in client components
 
-const supabaseUrl = process.env.SUPABASE_URL || 'https://placeholder.supabase.co';
+const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder-key';
 
-if (!process.env.SUPABASE_URL) {
+if (!process.env.SUPABASE_URL && !process.env.NEXT_PUBLIC_SUPABASE_URL) {
   console.warn('SUPABASE_URL is not set. Database operations will fail.');
 }
 

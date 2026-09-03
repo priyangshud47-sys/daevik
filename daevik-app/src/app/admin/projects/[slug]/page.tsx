@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback, use } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 
 interface Product {
   id: string;
@@ -16,8 +17,9 @@ interface Product {
   created_at: string;
 }
 
-export default function ProjectConfigPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = use(params);
+export default function ProjectConfigPage({ params }: { params?: Promise<{ slug: string }> | { slug: string } }) {
+  const routeParams = useParams();
+  const slug = (routeParams?.slug as string) || '';
   
   const [project, setProject] = useState<Product | null>(null);
   const [digitalProducts, setDigitalProducts] = useState<Product[]>([]);
@@ -35,15 +37,20 @@ export default function ProjectConfigPage({ params }: { params: Promise<{ slug: 
   const [gtmId, setGtmId] = useState('');
 
   const fetchProjectAndProducts = useCallback(async () => {
+    if (!slug) return;
+    setLoading(true);
     try {
       // Fetch the specific project
-      const projectRes = await fetch(`/api/admin/products/${slug}`);
-      if (!projectRes.ok) throw new Error('Failed to fetch project');
+      const projectRes = await fetch(`/api/admin/products/${encodeURIComponent(slug)}`);
+      if (!projectRes.ok) {
+        const errJson = await projectRes.json().catch(() => ({}));
+        throw new Error(errJson?.error || `Failed to fetch project (status ${projectRes.status})`);
+      }
       const projectData = await projectRes.json();
       
       setProject(projectData);
-      setPrice(projectData.price.toString());
-      setGatewayProvider(projectData.gateway_provider || 'razorpay');
+      setPrice(projectData.price !== undefined && projectData.price !== null ? projectData.price.toString() : '0');
+      setGatewayProvider(projectData.gateway_provider || 'cashfree');
       
       const config = projectData.checkout_config || {};
       setAttachedProductId(config.attached_product_id || '');
@@ -65,8 +72,8 @@ export default function ProjectConfigPage({ params }: { params: Promise<{ slug: 
         setFbConfigs(Array.isArray(fbData) ? fbData : []);
       }
     } catch (err) {
-      console.error(err);
-      setToast({ message: 'Error loading project', type: 'error' });
+      console.error('Error in fetchProjectAndProducts:', err);
+      setToast({ message: err instanceof Error ? err.message : 'Error loading project', type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -123,7 +130,24 @@ export default function ProjectConfigPage({ params }: { params: Promise<{ slug: 
   };
 
   if (loading) return <div className="p-8 text-center text-muted">Loading Project Details...</div>;
-  if (!project) return <div className="p-8 text-center text-error">Project not found</div>;
+  if (!project) {
+    return (
+      <div className="p-8 text-center">
+        <div className="text-error font-semibold mb-2">Project &ldquo;{slug}&rdquo; not found</div>
+        <p className="text-sm text-secondary mb-4">
+          Could not load the project configuration from the database.
+        </p>
+        <div className="flex justify-center gap-3">
+          <Link href="/admin/projects" className="btn btn-sm btn-ghost">
+            &larr; Back to Projects
+          </Link>
+          <button onClick={() => fetchProjectAndProducts()} className="btn btn-sm btn-secondary">
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="animate-fade-in" style={{ paddingBottom: '40px' }}>

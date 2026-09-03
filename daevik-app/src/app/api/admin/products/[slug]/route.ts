@@ -26,14 +26,21 @@ const productUpdateSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ slug: string }> }
+  context: { params: Promise<{ slug: string }> | { slug: string } }
 ) {
   const session = await auth();
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { slug } = await params;
+  const rawParams = await context.params;
+  const rawSlug = rawParams?.slug || '';
+  const slug = decodeURIComponent(rawSlug).trim();
+
+  if (!slug) {
+    return NextResponse.json({ error: 'Slug parameter is required' }, { status: 400 });
+  }
+
   const { data, error } = await supabase
     .from('products')
     .select('*')
@@ -41,7 +48,8 @@ export async function GET(
     .single();
 
   if (error || !data) {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    console.error(`[Admin Product API] Product not found for slug "${slug}":`, error);
+    return NextResponse.json({ error: 'Product not found', details: error?.message }, { status: 404 });
   }
 
   return NextResponse.json(hideProductUrls(data));
@@ -60,14 +68,15 @@ function extractStoragePath(url: string | null) {
 // PUT — Update product by slug
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ slug: string }> }
+  context: { params: Promise<{ slug: string }> | { slug: string } }
 ) {
   const session = await auth();
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { slug } = await params;
+  const rawParams = await context.params;
+  const slug = decodeURIComponent(rawParams?.slug || '').trim();
 
   try {
     const body = await request.json();
@@ -123,14 +132,15 @@ export async function PUT(
 // DELETE — Delete product by slug
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ slug: string }> }
+  context: { params: Promise<{ slug: string }> | { slug: string } }
 ) {
   const session = await auth();
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { slug } = await params;
+  const rawParams = await context.params;
+  const slug = decodeURIComponent(rawParams?.slug || '').trim();
 
   const { data: existingProduct } = await supabase
     .from('products')
