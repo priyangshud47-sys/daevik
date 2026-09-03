@@ -36,7 +36,8 @@ export default function ZeroInvestmentGuidePage() {
       content_ids: ['zero-investment-guide'],
       content_type: 'product',
       value: 149,
-      currency: 'INR'
+      currency: 'INR',
+      contents: [{ id: 'zero-investment-guide', quantity: 1, item_price: 149 }],
     });
 
     // Google Ads & GA4 view_item event

@@ -124,6 +124,8 @@ export default function CheckoutPage() {
         content_name: product.name,
         content_ids: [product.id],
         content_type: 'product',
+        num_items: 1,
+        contents: [{ id: product.id, quantity: 1, item_price: product.price }],
       }, { eventID: checkoutEventId.current });
 
       // Google Ads & GA4 begin_checkout event

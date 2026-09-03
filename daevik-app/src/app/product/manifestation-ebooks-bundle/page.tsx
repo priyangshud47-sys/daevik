@@ -32,7 +32,8 @@ export default function ManifestationBundlePage() {
       content_ids: ['manifestation-ebooks-bundle'],
       content_type: 'product',
       value: 149,
-      currency: 'INR'
+      currency: 'INR',
+      contents: [{ id: 'manifestation-ebooks-bundle', quantity: 1, item_price: 149 }],
     });
 
     // Google Ads & GA4 view_item event

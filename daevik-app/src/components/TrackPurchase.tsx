@@ -42,6 +42,8 @@ export default function TrackPurchase({
       content_name: productName,
       content_ids: [productId],
       content_type: 'product',
+      num_items: 1,
+      contents: [{ id: productId, quantity: 1, item_price: value }],
     }, { eventID: eventId });
 
     // 2. Google Ads Conversion & GA4 Purchase Tracking

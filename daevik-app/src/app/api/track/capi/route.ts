@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { trackPageView, trackInitiateCheckout, trackPurchase } from '@/lib/facebook-capi';
+import { trackPageView, trackViewContent, trackInitiateCheckout, trackPurchase } from '@/lib/facebook-capi';
 import { v4 as uuidv4 } from 'uuid';
 
 export async function POST(request: NextRequest) {
@@ -52,6 +52,19 @@ export async function POST(request: NextRequest) {
       await trackPageView({
         url,
         eventId,
+        userIp,
+        userAgent,
+        fbp: finalFbp,
+        fbc: finalFbc,
+      });
+    } else if (event === 'ViewContent') {
+      await trackViewContent({
+        url,
+        eventId,
+        productName: productName || 'Unknown Product',
+        productId: productId || 'unknown',
+        value: value || 0,
+        currency: currency || 'INR',
         userIp,
         userAgent,
         fbp: finalFbp,

@@ -7,7 +7,7 @@ const FB_TEST_EVENT_CODE = process.env.FB_TEST_EVENT_CODE || '';
 const FB_API_VERSION = 'v18.0';
 
 
-type EventName = 'PageView' | 'InitiateCheckout' | 'Purchase' | 'AddToCart';
+type EventName = 'PageView' | 'ViewContent' | 'InitiateCheckout' | 'Purchase' | 'AddToCart';
 
 interface CAPIEventParams {
   eventName: EventName;
@@ -18,6 +18,7 @@ interface CAPIEventParams {
   userPhone?: string;
   userFirstName?: string; // Improves audience match rate significantly
   userLastName?: string;  // Improves audience match rate significantly
+  userCountry?: string;   // Two-letter ISO code, e.g. 'in' (hashed per Meta spec)
   userIp?: string;
   userAgent?: string;
   fbp?: string; // Facebook browser ID cookie
@@ -28,6 +29,12 @@ interface CAPIEventParams {
     content_name?: string;
     content_ids?: string[];
     content_type?: string;
+    num_items?: number;
+    contents?: Array<{
+      id: string;
+      quantity: number;
+      item_price?: number;
+    }>;
   };
   fbPixelId?: string | null;
   fbAccessToken?: string | null;
@@ -110,6 +117,12 @@ export async function sendCAPIEvent(params: CAPIEventParams): Promise<boolean> {
   }
   if (params.userAgent) {
     userData.client_user_agent = params.userAgent;
+  }
+
+  // Country: 2-letter ISO code hashed per Meta CAPI specification
+  const countryCode = (params.userCountry || 'in').trim().toLowerCase();
+  if (countryCode.length === 2) {
+    userData.country = [hashPII(countryCode)];
   }
   // Normalize and assign fbp (Facebook browser ID)
   if (params.fbp) {
@@ -244,6 +257,56 @@ export async function trackInitiateCheckout(params: {
       content_name: params.productName,
       content_ids: [params.productId],
       content_type: 'product',
+      num_items: 1,
+      contents: [
+        {
+          id: params.productId,
+          quantity: 1,
+          item_price: params.value,
+        },
+      ],
+    },
+  });
+}
+
+export async function trackViewContent(params: {
+  url: string;
+  eventId?: string;
+  productName: string;
+  productId: string;
+  value: number;
+  currency: string;
+  userIp?: string;
+  userAgent?: string;
+  fbp?: string;
+  fbc?: string;
+  fbPixelId?: string | null;
+  fbAccessToken?: string | null;
+}) {
+  return sendCAPIEvent({
+    eventName: 'ViewContent',
+    eventId: params.eventId || `vc_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
+    sourceUrl: params.url,
+    userIp: params.userIp,
+    userAgent: params.userAgent,
+    fbp: params.fbp,
+    fbc: params.fbc,
+    fbPixelId: params.fbPixelId,
+    fbAccessToken: params.fbAccessToken,
+    customData: {
+      value: params.value,
+      currency: params.currency,
+      content_name: params.productName,
+      content_ids: [params.productId],
+      content_type: 'product',
+      num_items: 1,
+      contents: [
+        {
+          id: params.productId,
+          quantity: 1,
+          item_price: params.value,
+        },
+      ],
     },
   });
 }
@@ -260,6 +323,7 @@ export async function trackPurchase(params: {
   userPhone?: string;
   userFirstName?: string;
   userLastName?: string;
+  userCountry?: string;
   userIp?: string;
   userAgent?: string;
   fbp?: string;
@@ -276,6 +340,7 @@ export async function trackPurchase(params: {
     userPhone: params.userPhone,
     userFirstName: params.userFirstName,
     userLastName: params.userLastName,
+    userCountry: params.userCountry,
     userIp: params.userIp,
     userAgent: params.userAgent,
     fbp: params.fbp,
@@ -288,6 +353,14 @@ export async function trackPurchase(params: {
       content_name: params.productName,
       content_ids: [params.productId],
       content_type: 'product',
+      num_items: 1,
+      contents: [
+        {
+          id: params.productId,
+          quantity: 1,
+          item_price: params.value,
+        },
+      ],
     },
   });
 }

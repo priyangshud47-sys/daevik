@@ -91,7 +91,8 @@ export default function PlacementCrackKitPage() {
       content_ids: ['placementcrack-kit'],
       content_type: 'product',
       value: 199,
-      currency: 'INR'
+      currency: 'INR',
+      contents: [{ id: 'placementcrack-kit', quantity: 1, item_price: 199 }],
     });
     trackGoogleViewItem({
       id: 'placementcrack-kit',
