@@ -184,6 +184,9 @@ export default function CheckoutPage() {
       };
       const fbp = getCookie('_fbp');
       const fbc = getCookie('_fbc');
+      // Read _ga cookie for server-side GA4 Measurement Protocol purchase tracking.
+      // Format: "GA1.1.XXXXXXXXXX.XXXXXXXXXX" — the server will parse the numeric portion.
+      const gaClientId = getCookie('_ga') || undefined;
 
       // Second enriched CAPI InitiateCheckout — now we have the user's data
       // This gives Facebook email, phone, name for 15.68% better match quality
@@ -231,6 +234,9 @@ export default function CheckoutPage() {
           customerPhone: formData.phone,
           fbp,
           fbc,
+          // ga_client_id enables server-side GA4 purchase tracking via Measurement Protocol.
+          // Stored on the order row and fired from the webhook in order-processing.ts.
+          ga_client_id: gaClientId,
         }),
       });
 

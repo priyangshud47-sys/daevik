@@ -10,7 +10,7 @@ import { v4 as uuidv4 } from 'uuid';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { productSlug, customerName, customerEmail, customerPhone, fbp, fbc } = body;
+    const { productSlug, customerName, customerEmail, customerPhone, fbp, fbc, ga_client_id } = body;
 
     // Capture IP and User-Agent at order creation time for FB CAPI match quality
     const userIp = request.headers.get('x-forwarded-for')?.split(',')[0].trim()
@@ -137,6 +137,7 @@ export async function POST(request: NextRequest) {
           fb_click_id: fbc || null,
           user_ip: userIp,
           user_agent: userAgent,
+          ga_client_id: ga_client_id || null,
         });
 
         return setSessionCookie(NextResponse.json({
@@ -183,6 +184,7 @@ export async function POST(request: NextRequest) {
           fb_click_id: fbc || null,
           user_ip: userIp,
           user_agent: userAgent,
+          ga_client_id: ga_client_id || null,
         });
 
         return setSessionCookie(NextResponse.json({
@@ -227,6 +229,7 @@ export async function POST(request: NextRequest) {
           fb_click_id: fbc || null,
           user_ip: userIp,
           user_agent: userAgent,
+          ga_client_id: ga_client_id || null,
         });
 
         return setSessionCookie(NextResponse.json({

@@ -1,6 +1,8 @@
 import { supabase } from '@/lib/supabase';
 import { sendProductDeliveryEmail } from '@/lib/email';
 import { trackPurchase } from '@/lib/facebook-capi';
+import { trackGooglePurchaseMP } from '@/lib/google-mp';
+import { getGoogleTrackingConfig } from '@/lib/google-config';
 import { logFunnelEvent } from '@/lib/funnel';
 import { generateInvoicePDF } from '@/lib/invoice';
 
@@ -30,9 +32,10 @@ export async function processOrderCompletion(
   }
 
   // Fetch full order details for emails and tracking
+  // ga_client_id is stored at order-creation time (from the _ga cookie sent by checkout page)
   const { data: order } = await supabase
     .from('orders')
-    .select('*, product:products(*), customer:customers(*), fb_browser_id, fb_click_id, user_ip, user_agent')
+    .select('*, product:products(*), customer:customers(*), fb_browser_id, fb_click_id, user_ip, user_agent, ga_client_id')
     .eq('id', orderId)
     .single();
 
@@ -109,6 +112,24 @@ export async function processOrderCompletion(
     });
   } catch (fbErr) {
     console.error('Failed to track FB CAPI:', fbErr);
+  }
+
+  // Track GA4 Measurement Protocol (server-side) — fires even if user never visits thank-you page.
+  // Requires GA4_MP_API_SECRET env var. Gracefully skips if not configured.
+  try {
+    const googleConfig = await getGoogleTrackingConfig();
+    if (googleConfig.active && (googleConfig.ga4_id || googleConfig.google_ads_id)) {
+      await trackGooglePurchaseMP({
+        clientId: (order as any).ga_client_id || '',
+        orderId: order.id,
+        value: order.amount,
+        currency: order.currency,
+        productName: order.product.name,
+        productId: order.product.id,
+      });
+    }
+  } catch (gaErr) {
+    console.error('Failed to track GA4 MP purchase:', gaErr);
   }
 
   // Log Funnel Event

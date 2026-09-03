@@ -188,6 +188,7 @@ function CheckoutContent() {
       };
       const fbp = getCookie('_fbp');
       const fbc = getCookie('_fbc');
+      const gaClientId = getCookie('_ga') || undefined;
 
       // Second enriched CAPI InitiateCheckout — now we have the user's data
       // This gives Facebook email, phone, name for 15.68% better match quality
@@ -235,6 +236,7 @@ function CheckoutContent() {
           customerPhone: formData.phone,
           fbp,
           fbc,
+          ga_client_id: gaClientId,
         }),
       });
 
