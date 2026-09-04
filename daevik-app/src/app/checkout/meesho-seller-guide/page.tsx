@@ -553,7 +553,14 @@ function CheckoutContent() {
           padding: 36px 32px;
         }
 
-        .co-form-head h2 { font-size: 1.8rem; font-weight: 800; margin-bottom: 8px; }
+        .co-page h1,
+        .co-page h2,
+        .co-page h3,
+        .co-page h4 {
+          color: #FFFFFF;
+        }
+
+        .co-form-head h2 { font-size: 1.8rem; font-weight: 800; margin-bottom: 8px; color: #FFFFFF; }
         .co-form-head p { color: var(--co-text-sec); font-size: 0.95rem; margin-bottom: 24px; }
 
         .co-error-box {
@@ -661,7 +668,7 @@ function CheckoutContent() {
           border-radius: 4px;
           margin-bottom: 4px;
         }
-        .co-prod-meta h3 { font-size: 1.15rem; font-weight: 800; margin-bottom: 4px; line-height: 1.3; }
+        .co-prod-meta h3 { font-size: 1.15rem; font-weight: 800; margin-bottom: 4px; line-height: 1.3; color: #FFFFFF; }
         .co-prod-meta p { font-size: 0.8rem; color: var(--co-text-sec); margin-bottom: 6px; }
         .co-prod-price { font-size: 1.2rem; font-weight: 800; color: #FFF; }
         .co-prod-strike { font-size: 0.9rem; text-decoration: line-through; color: var(--co-text-mut); margin-left: 6px; }

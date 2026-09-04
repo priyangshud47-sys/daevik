@@ -579,6 +579,16 @@ export default function MeeshoSellerGuidePage() {
           overflow-x: hidden;
         }
 
+        /* Ensure all headings in this dark theme page are bright white */
+        .page-root h1,
+        .page-root h2,
+        .page-root h3,
+        .page-root h4,
+        .page-root h5,
+        .page-root h6 {
+          color: #FFFFFF;
+        }
+
         .container {
           max-width: 1120px;
           margin: 0 auto;
@@ -635,6 +645,7 @@ export default function MeeshoSellerGuidePage() {
           line-height: 1.18;
           margin-bottom: 20px;
           letter-spacing: -0.02em;
+          color: #FFFFFF;
         }
 
         .highlight-pink {
@@ -823,6 +834,7 @@ export default function MeeshoSellerGuidePage() {
           font-weight: 800;
           margin-bottom: 14px;
           line-height: 1.25;
+          color: #FFFFFF;
         }
 
         .section-head p {
@@ -866,6 +878,7 @@ export default function MeeshoSellerGuidePage() {
           font-size: 1.2rem;
           font-weight: 700;
           margin-bottom: 10px;
+          color: #FFFFFF;
         }
 
         .problem-card p {
@@ -892,6 +905,7 @@ export default function MeeshoSellerGuidePage() {
           font-size: 2rem;
           font-weight: 800;
           margin-bottom: 16px;
+          color: #FFFFFF;
         }
 
         .solution-content p {
@@ -1137,6 +1151,7 @@ export default function MeeshoSellerGuidePage() {
           font-size: 2.2rem;
           font-weight: 800;
           margin-bottom: 12px;
+          color: #FFFFFF;
         }
 
         .stack-sub {
@@ -1457,6 +1472,7 @@ export default function MeeshoSellerGuidePage() {
           font-weight: 900;
           margin: 16px 0 12px;
           line-height: 1.25;
+          color: #FFFFFF;
         }
 
         .final-cta-card p {
