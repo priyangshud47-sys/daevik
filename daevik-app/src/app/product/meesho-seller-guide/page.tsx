@@ -73,7 +73,7 @@ const UrgencyBlock = ({ timerH, timerM, timerS, salesCount }: { timerH: string; 
     </div>
     <div className="urgency-row">
       <span className="urgency-fire">⏳</span>
-      <span>₹149 launch price expires in: <strong className="countdown">{timerH}:{timerM}:{timerS}</strong></span>
+      <span>₹199 launch price expires in: <strong className="countdown">{timerH}:{timerM}:{timerS}</strong></span>
     </div>
     <div className="urgency-row urgency-price-warn">
       <span className="urgency-fire">⚠️</span>
@@ -97,16 +97,16 @@ export default function MeeshoSellerGuidePage() {
       content_name: 'Start Selling on Meesho - Business Guide',
       content_ids: ['meesho-seller-guide'],
       content_type: 'product',
-      value: 149,
+      value: 199,
       currency: 'INR',
-      contents: [{ id: 'meesho-seller-guide', quantity: 1, item_price: 149 }],
+      contents: [{ id: 'meesho-seller-guide', quantity: 1, item_price: 199 }],
     });
 
     // Track Google Tag view_item
     trackGoogleViewItem({
       id: 'meesho-seller-guide',
       name: 'Start Selling on Meesho - Business Guide',
-      price: 149,
+      price: 199,
       currency: 'INR',
     });
   }, []);
@@ -134,7 +134,7 @@ export default function MeeshoSellerGuidePage() {
     { q: "Is this a physical book or a digital download?", a: "This is a comprehensive, 100% digital PDF handbook (2026 Edition). Immediately after payment, the download link is shown on your screen and also sent to your email. You can read it on your phone, laptop, or tablet." },
     { q: "I am a complete beginner with zero business experience. Will I understand this?", a: "100%. The guide is written in clear, simple English mixed with conversational business explanations. There is no academic jargon. Every concept is accompanied by real examples, worked rupee numbers, and step-by-step screenshots." },
     { q: "How will this guide protect me from losing money on returns?", a: "Returns and RTO are the #1 reason new sellers go bankrupt on Meesho. Chapter 7 teaches you our 'Return Buffer Pricing Formula', and Chapter 9 gives you the exact video-recording protocol required to win 100% of wrong-return compensation claims." },
-    { q: "Is there any recurring monthly charge or subscription?", a: "No. You pay ₹149 once and get lifetime access to the PDF guide and all included bonus checklists and spreadsheets." },
+    { q: "Is there any recurring monthly charge or subscription?", a: "No. You pay ₹199 once and get lifetime access to the PDF guide and all included bonus checklists and spreadsheets." },
     { q: "What if I don't find the guide useful?", a: "We have a 7-Day No-Questions-Asked Refund Guarantee. If you feel the guide didn't give you at least 10x value, email us at support@daevik.in within 7 days for a 100% instant refund." }
   ];
 
@@ -144,7 +144,7 @@ export default function MeeshoSellerGuidePage() {
     { name: "Amit Verma", city: "Delhi (Sadar Bazar)", category: "Mobile Accessories", text: "Sabse badi problem thi wrong returns. Customer ne pathar bhej diya aur Meesho claim reject kar deta tha. Chapter 9 ka unboxing video format follow kiya, pehle hi hafte mein ₹3,400 ka claim approve hua!", rating: 5 },
     { name: "Gurpreet Singh", city: "Ludhiana, Punjab", category: "Hosiery & Winterwear", text: "Bohot log YouTube pe '0% Commission' ka jhooth bolte hain. Is book ne pehli baar transparent tareeqe se saare packaging, shipping aur weight slab charges samjhaye. Worth at least ₹2,000.", rating: 5 },
     { name: "Sneha Patel", city: "Ahmedabad, Gujarat", category: "Kitchen Organizers", text: "Chapter 13 ka 30-Day Launch Playbook gold hai. Day 1 se Day 30 tak roz kya karna hai clearly likha hai. 18th day pe mera pehla order aaya aur month-end tak 64 orders deliver ho gaye.", rating: 5 },
-    { name: "Mohd. Rizwan", city: "Tirupur, Tamil Nadu", category: "Cotton T-Shirts", text: "The honest truth about Meesho Ads in Chapter 11 saved me at least ₹15,000 in ad burn. Clear, practical, zero fluff. Best ₹149 I've invested in my business journey.", rating: 5 }
+    { name: "Mohd. Rizwan", city: "Tirupur, Tamil Nadu", category: "Cotton T-Shirts", text: "The honest truth about Meesho Ads in Chapter 11 saved me at least ₹15,000 in ad burn. Clear, practical, zero fluff. Best ₹199 I've invested in my business journey.", rating: 5 }
   ];
 
   return (
@@ -190,12 +190,12 @@ export default function MeeshoSellerGuidePage() {
           <div className="hero-cta-card">
             <div className="price-tag-wrap">
               <span className="strike-price">₹1,499</span>
-              <span className="deal-price">₹149</span>
-              <span className="discount-pill">90% OFF TODAY</span>
+              <span className="deal-price">₹199</span>
+              <span className="discount-pill">87% OFF TODAY</span>
             </div>
 
             <a href={CHECKOUT_URL} className="primary-cta-btn">
-              GET INSTANT ACCESS FOR ₹149
+              GET INSTANT ACCESS FOR ₹199
               <ArrowRight />
             </a>
 
@@ -280,7 +280,7 @@ export default function MeeshoSellerGuidePage() {
 
           <div className="section-cta-wrap">
             <a href={CHECKOUT_URL} className="primary-cta-btn">
-              GET ALL 15 CHAPTERS NOW FOR ₹149 →
+              GET ALL 15 CHAPTERS NOW FOR ₹199 →
             </a>
           </div>
         </div>
@@ -413,12 +413,12 @@ export default function MeeshoSellerGuidePage() {
 
             <div className="stack-total-box">
               <div className="total-retail">Total Real Value: <span>₹2,999</span></div>
-              <div className="today-price">Today&apos;s Price: <strong>₹149</strong></div>
-              <div className="save-callout">🎉 You Save ₹2,850 (95% Discount)</div>
+              <div className="today-price">Today&apos;s Price: <strong>₹199</strong></div>
+              <div className="save-callout">🎉 You Save ₹2,800 (93% Discount)</div>
             </div>
 
             <a href={CHECKOUT_URL} className="primary-cta-btn">
-              CLAIM THE COMPLETE BUNDLE FOR ₹149 →
+              CLAIM THE COMPLETE BUNDLE FOR ₹199 →
             </a>
             <GuaranteeBox />
           </div>
@@ -524,12 +524,12 @@ export default function MeeshoSellerGuidePage() {
 
             <div className="price-tag-wrap" style={{ justifyContent: 'center' }}>
               <span className="strike-price">₹1,499</span>
-              <span className="deal-price">₹149</span>
+              <span className="deal-price">₹199</span>
               <span className="discount-pill">SPECIAL OFFER</span>
             </div>
 
             <a href={CHECKOUT_URL} className="primary-cta-btn final-btn">
-              GET THE MEESHO BUSINESS GUIDE FOR ₹149
+              GET THE MEESHO BUSINESS GUIDE FOR ₹199
               <ArrowRight />
             </a>
 
@@ -543,10 +543,10 @@ export default function MeeshoSellerGuidePage() {
       <div className="sticky-mobile-bar">
         <div className="sticky-price">
           <span className="sticky-old">₹1,499</span>
-          <span className="sticky-new">₹149</span>
+          <span className="sticky-new">₹199</span>
         </div>
         <a href={CHECKOUT_URL} className="sticky-btn">
-          BUY NOW — ₹149 &rarr;
+          BUY NOW — ₹199 &rarr;
         </a>
       </div>
 

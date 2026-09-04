@@ -40,7 +40,7 @@ function CheckoutContent() {
     id: 'meesho-seller-guide',
     name: 'Start Selling on Meesho - Business Guide (Latest Sept 2026)',
     slug: 'meesho-seller-guide',
-    price: 149,
+    price: 199,
     description: '15-chapter fact-checked handbook on Meesho selling: No-GST enrolment ID guide, real fee calculations, pricing math for returns & suspension protection.',
     thumbnail_url: '/product-images/meesho-seller-guide.jpg',
     gateway_provider: 'cashfree',
@@ -466,8 +466,8 @@ function CheckoutContent() {
                 <span style={{ textDecoration: 'line-through' }}>₹2,999</span>
               </div>
               <div className="co-summary-line co-discount-line">
-                <span>Special Launch Discount (95% Off)</span>
-                <span>-₹2,850</span>
+                <span>Special Launch Discount (93% Off)</span>
+                <span>-₹2,800</span>
               </div>
               <div className="co-summary-divider"></div>
               <div className="co-summary-line co-total-line">
