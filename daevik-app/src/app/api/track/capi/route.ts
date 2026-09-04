@@ -8,7 +8,8 @@ export async function POST(request: NextRequest) {
     const { event, url, productName, productId, value, currency, externalId, userEmail, userPhone, userFirstName, userLastName, fbp, fbc } = body;
 
     // Get client IP and user agent
-    const userIp = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || undefined;
+    const rawIp = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || undefined;
+    const userIp = rawIp ? rawIp.split(',')[0].trim() : undefined;
     const userAgent = request.headers.get('user-agent') || undefined;
 
     // 1. Resolve fbc (Facebook Click ID)

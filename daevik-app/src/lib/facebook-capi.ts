@@ -113,7 +113,7 @@ export async function sendCAPIEvent(params: CAPIEventParams): Promise<boolean> {
     userData.ln = [hashPII(params.userLastName)];
   }
   if (params.userIp) {
-    userData.client_ip_address = params.userIp;
+    userData.client_ip_address = params.userIp.split(',')[0].trim();
   }
   if (params.userAgent) {
     userData.client_user_agent = params.userAgent;
