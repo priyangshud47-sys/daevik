@@ -32,10 +32,9 @@ export async function processOrderCompletion(
   }
 
   // Fetch full order details for emails and tracking
-  // ga_client_id is stored at order-creation time (from the _ga cookie sent by checkout page)
   const { data: order } = await supabase
     .from('orders')
-    .select('*, product:products(*), customer:customers(*), fb_browser_id, fb_click_id, user_ip, user_agent, ga_client_id')
+    .select('*, product:products(*), customer:customers(*)')
     .eq('id', orderId)
     .single();
 
@@ -120,7 +119,7 @@ export async function processOrderCompletion(
     const googleConfig = await getGoogleTrackingConfig();
     if (googleConfig.active && (googleConfig.ga4_id || googleConfig.google_ads_id)) {
       await trackGooglePurchaseMP({
-        clientId: (order as any).ga_client_id || '',
+        clientId: (order as any).ga_client_id || (order as any).gateway_response?.ga_client_id || '',
         orderId: order.id,
         value: order.amount,
         currency: order.currency,

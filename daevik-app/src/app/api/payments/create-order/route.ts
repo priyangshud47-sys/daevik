@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
         });
 
         // Create pending order
-        await supabase.from('orders').insert({
+        const { error: rzpOrderErr } = await supabase.from('orders').insert({
           id: orderId,
           product_id: product.id,
           customer_id: customerId,
@@ -153,8 +153,13 @@ export async function POST(request: NextRequest) {
           fb_click_id: resolvedFbc,
           user_ip: userIp,
           user_agent: userAgent,
-          ga_client_id: ga_client_id || null,
+          gateway_response: ga_client_id ? { ga_client_id } : null,
         });
+
+        if (rzpOrderErr) {
+          console.error('[Create Order] Failed to insert Razorpay order:', rzpOrderErr);
+          throw new Error('Database order creation failed: ' + rzpOrderErr.message);
+        }
 
         return setSessionCookie(NextResponse.json({
           gateway: 'razorpay',
@@ -187,7 +192,7 @@ export async function POST(request: NextRequest) {
         });
 
         // Create pending order
-        await supabase.from('orders').insert({
+        const { error: payuOrderErr } = await supabase.from('orders').insert({
           id: orderId,
           product_id: product.id,
           customer_id: customerId,
@@ -200,8 +205,13 @@ export async function POST(request: NextRequest) {
           fb_click_id: resolvedFbc,
           user_ip: userIp,
           user_agent: userAgent,
-          ga_client_id: ga_client_id || null,
+          gateway_response: ga_client_id ? { ga_client_id } : null,
         });
+
+        if (payuOrderErr) {
+          console.error('[Create Order] Failed to insert PayU order:', payuOrderErr);
+          throw new Error('Database order creation failed: ' + payuOrderErr.message);
+        }
 
         return setSessionCookie(NextResponse.json({
           gateway: 'payu',
@@ -232,7 +242,7 @@ export async function POST(request: NextRequest) {
         });
 
         // Create pending order
-        await supabase.from('orders').insert({
+        const { error: cfOrderErr } = await supabase.from('orders').insert({
           id: orderId,
           product_id: product.id,
           customer_id: customerId,
@@ -245,8 +255,13 @@ export async function POST(request: NextRequest) {
           fb_click_id: resolvedFbc,
           user_ip: userIp,
           user_agent: userAgent,
-          ga_client_id: ga_client_id || null,
+          gateway_response: ga_client_id ? { ga_client_id } : null,
         });
+
+        if (cfOrderErr) {
+          console.error('[Create Order] Failed to insert Cashfree order:', cfOrderErr);
+          throw new Error('Database order creation failed: ' + cfOrderErr.message);
+        }
 
         return setSessionCookie(NextResponse.json({
           gateway: 'cashfree',

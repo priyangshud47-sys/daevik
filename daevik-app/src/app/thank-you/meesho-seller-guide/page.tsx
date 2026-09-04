@@ -37,8 +37,8 @@ export default async function MeeshoGuideThankYou({
     .eq('id', orderId)
     .single();
 
-  // Synchronous Verification Fallback for Cashfree
-  if (order && order.payment_status === 'pending' && order.gateway_used === 'cashfree') {
+  // Synchronous Verification & Auto-Recovery Fallback for Cashfree
+  if (!order || order.payment_status === 'pending') {
     const { data: config } = await supabase
       .from('gateway_configs')
       .select('api_key, api_secret, extra_config')
@@ -49,7 +49,7 @@ export default async function MeeshoGuideThankYou({
       const mode = (config.extra_config as Record<string, string>)?.mode || 'test';
       const baseUrl = mode === 'live' ? 'https://api.cashfree.com/pg' : 'https://sandbox.cashfree.com/pg';
       try {
-        const res = await fetch(`${baseUrl}/orders/${order.id}`, {
+        const res = await fetch(`${baseUrl}/orders/${orderId}`, {
           headers: {
             'x-client-id': config.api_key,
             'x-client-secret': config.api_secret,
@@ -65,16 +65,59 @@ export default async function MeeshoGuideThankYou({
             const protocol = host.includes('localhost') ? 'http' : 'https';
             const appUrl = `${protocol}://${host}`;
 
+            if (!order) {
+              // Recover missing order from Cashfree data
+              const { data: prod } = await supabase.from('products').select('*').eq('slug', slug).single();
+              if (prod) {
+                let custId: string | null = null;
+                const custEmail = cfData.customer_details?.customer_email;
+                if (custEmail) {
+                  const { data: existingCust } = await supabase.from('customers').select('id').eq('email', custEmail).single();
+                  if (existingCust) custId = existingCust.id;
+                  else {
+                    const { data: newCust } = await supabase.from('customers').insert({
+                      name: cfData.customer_details?.customer_name || 'Customer',
+                      email: custEmail,
+                      phone: cfData.customer_details?.customer_phone || null,
+                    }).select('id').single();
+                    if (newCust) custId = newCust.id;
+                  }
+                }
+                if (custId) {
+                  await supabase.from('orders').insert({
+                    id: orderId,
+                    product_id: prod.id,
+                    customer_id: custId,
+                    amount: cfData.order_amount || prod.price,
+                    currency: cfData.order_currency || 'INR',
+                    gateway_used: 'cashfree',
+                    gateway_order_id: cfData.cf_order_id ? String(cfData.cf_order_id) : orderId,
+                    transaction_id: cfData.cf_order_id ? String(cfData.cf_order_id) : null,
+                    payment_status: 'completed',
+                    gateway_response: cfData,
+                  });
+                }
+              }
+            }
+
             const { processOrderCompletion } = await import('@/lib/order-processing');
             await processOrderCompletion(
-              order.id,
+              orderId,
               cfData.cf_order_id ? cfData.cf_order_id.toString() : null,
               cfData,
               'Cashfree',
               appUrl
             );
 
-            order.payment_status = 'completed';
+            // Re-fetch order
+            const { data: freshOrder } = await supabase
+              .from('orders')
+              .select('*, customer:customers(*), product:products(*)')
+              .eq('id', orderId)
+              .single();
+            if (freshOrder) {
+              order = freshOrder;
+            }
           }
         }
       } catch (e) {
